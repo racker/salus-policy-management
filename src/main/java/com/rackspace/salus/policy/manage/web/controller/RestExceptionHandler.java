@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-@ControllerAdvice(basePackages = "com.rackspace.salus.monitor_management.web")
+@ControllerAdvice(basePackages = "com.rackspace.salus.policy.manage.web")
 @ResponseBody
 public class RestExceptionHandler extends
     com.rackspace.salus.common.web.AbstractRestExceptionHandler {
