@@ -2,6 +2,8 @@ package com.rackspace.salus.policy.manage.entities;
 
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -11,8 +13,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Entity
@@ -34,10 +38,20 @@ public class TenantMetadata {
   @Column(columnDefinition = "json")
   Map<String, String> metadata;
 
+  @CreationTimestamp
+  @Column(name="created_timestamp")
+  Instant createdTimestamp;
+
+  @UpdateTimestamp
+  @Column(name="updated_timestamp")
+  Instant updatedTimestamp;
+
   public TenantMetadataDTO toDTO() {
     return new TenantMetadataDTO()
         .setId(id)
         .setTenantId(tenantId)
-        .setMetadata(metadata);
+        .setMetadata(metadata)
+        .setCreatedTimestamp(DateTimeFormatter.ISO_INSTANT.format(createdTimestamp))
+        .setUpdatedTimestamp(DateTimeFormatter.ISO_INSTANT.format(updatedTimestamp));
   }
 }

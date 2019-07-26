@@ -30,4 +30,7 @@ public class TenantMetadataDTO {
   String tenantId;
 
   Map<String,String> metadata;
+
+  String createdTimestamp;
+  String updatedTimestamp;
 }
