@@ -33,9 +33,12 @@ public class TenantMetadata {
   @Column(name = "tenant_id", unique = true)
   String tenantId;
 
+  @Column(name = "account_type")
+  String accountType;
+
   @NotNull
   @Type(type = "json")
-  @Column(columnDefinition = "json")
+  @Column(columnDefinition = "text")
   Map<String, String> metadata;
 
   @CreationTimestamp

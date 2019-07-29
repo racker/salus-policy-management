@@ -42,7 +42,6 @@ import org.hibernate.annotations.UpdateTimestamp;
     strategy = InheritanceType.JOINED
 )
 @Data
-@ValidPolicy
 public abstract class Policy implements Serializable {
   @Id
   @GeneratedValue

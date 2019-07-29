@@ -33,7 +33,7 @@ import javax.validation.Payload;
 @Constraint(validatedBy = {PolicyEntityValidator.class, MonitorPolicyCreateValidator.class})
 public @interface ValidPolicy {
 
-  String message() default "subscope must be set for any non-global policy";
+  String message() default "subscope must be set for any non-global policy but not for global policies";
 
   Class<?>[] groups() default {};
 

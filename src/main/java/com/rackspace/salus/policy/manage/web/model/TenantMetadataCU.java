@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.model;
+package com.rackspace.salus.policy.manage.web.model;
 
-public enum TenantMetadataKeys {
-  ACCOUNT_TYPE("AccountType");
+import java.util.Map;
+import lombok.Data;
 
-  private final String key;
+@Data
+public class TenantMetadataCU {
+  String accountType;
+  Map<String,String> metadata;
 
-  TenantMetadataKeys(String key) { this.key = key; }
-
-  public String getKey() {
-    return this.key;
-  }
 }

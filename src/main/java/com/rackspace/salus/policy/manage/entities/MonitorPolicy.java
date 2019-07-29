@@ -50,4 +50,3 @@ public class MonitorPolicy extends Policy {
         .setUpdatedTimestamp(DateTimeFormatter.ISO_INSTANT.format(updatedTimestamp));
   }
 }
-

@@ -21,11 +21,11 @@ import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
 import com.rackspace.salus.policy.manage.entities.Policy;
 import com.rackspace.salus.policy.manage.entities.TenantMetadata;
 import com.rackspace.salus.policy.manage.model.Scope;
-import com.rackspace.salus.policy.manage.model.TenantMetadataKeys;
 import com.rackspace.salus.policy.manage.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.policy.manage.repositories.PolicyRepository;
 import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -37,12 +37,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -71,7 +70,16 @@ public class PolicyManagement {
     this.policyEventProducer = policyEventProducer;
   }
 
-  public Policy createMonitorPolicy(@Valid MonitorPolicyCreate create) {
+  /**
+   * Creates a new policy in the database.
+   *
+   * @param create The details of the policy to create.
+   * @return The full details of the saved policy.
+   * @throws AlreadyExistsException if an equivalent policy already exists.
+   * @throws IllegalArgumentException if the parameters provided are not valid.
+   */
+  public Policy createMonitorPolicy(@Valid MonitorPolicyCreate create)
+      throws AlreadyExistsException, IllegalArgumentException {
     if (exists(create)) {
       throw new AlreadyExistsException(String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
           create.getScope(), create.getSubscope(), create.getName()));
@@ -92,6 +100,11 @@ public class PolicyManagement {
     return policy;
   }
 
+  /**
+   * Gets the full policy details with the provided id.
+   * @param id The id of the policy to retrieve.
+   * @return The full policy details.
+   */
   public Optional<Policy> getPolicy(UUID id) {
     return policyRepository.findById(id);
   }
@@ -106,17 +119,11 @@ public class PolicyManagement {
    * @return The list of effective monitor policies that should be applied to the tenant's resources.
    */
   public List<Policy> getEffectiveMonitorPoliciesForTenant(String tenantId) {
-    String accountType = getAccountTypeByTenant(tenantId);
-
     return new ArrayList<>(
         // Create a stream from all monitor policies
         StreamSupport.stream(monitorPolicyRepository.findAll().spliterator(), false)
             // Filter the stream for only those policies relevant to this tenant
-            .filter(policy -> {
-              return policy.getScope().equals(Scope.GLOBAL) ||
-                  (policy.getScope().equals(Scope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
-                  (policy.getScope().equals(Scope.TENANT) && policy.getSubscope().equals(tenantId));
-            })
+            .filter(policy -> isPolicyApplicable(policy, tenantId))
             // Get one policy for each policy name
             .collect(
                 // First group the policies by name
@@ -132,24 +139,51 @@ public class PolicyManagement {
             .collect(Collectors.toList()));
   }
 
-  private Iterable<MonitorPolicy> getAllMonitorPolicies() {
-    return monitorPolicyRepository.findAll();
+  /**
+   * Determines whether the given policy is relevant to the tenant.
+   *
+   * @param policy The policy to evaluate.
+   * @param tenantId The tenant to evaluate.
+   * @return True if the policy is relevant, even if it is currently overridden. False otherwise.
+   */
+  private boolean isPolicyApplicable(Policy policy, String tenantId) {
+    String accountType = getAccountTypeByTenant(tenantId);
+
+    return policy.getScope().equals(Scope.GLOBAL) ||
+        (policy.getScope().equals(Scope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
+        (policy.getScope().equals(Scope.TENANT) && policy.getSubscope().equals(tenantId));
   }
 
+  /**
+   * Removes the policy from the database and sends policy events for each tenant.
+   * @param id The id of the policy to remove.
+   */
   public void removePolicy(UUID id) {
-    getPolicy(id).orElseThrow(() ->
+    Policy policy = getPolicy(id).orElseThrow(() ->
         new NotFoundException(
             String.format("No policy found with id %s", id)));
 
     policyRepository.deleteById(id);
+    sendMonitorPolicyEvents((MonitorPolicy) policy);
   }
 
-  public boolean isValidMonitorId(String monitorId) {
+  /**
+   * Tests whether the monitor exists in the MonitorManagement service.
+   * @param monitorId The monitor to lookup.
+   * @return True if the monitor exists, otherwise false.
+   */
+  private boolean isValidMonitorId(String monitorId) {
     //monitorApi.getPolicyMonitorById(monitorId)
     return true; // temporary until monitor management is updated
   }
 
-  public boolean exists(MonitorPolicyCreate policy) {
+  /**
+   * Tests whether an equivalent policy already exists.
+   *
+   * @param policy The scope, subscope, and name of this policy will be looked up.
+   * @return True if a policy already exists for these keys, false otherwise.
+   */
+  private boolean exists(MonitorPolicyCreate policy) {
     return monitorPolicyRepository.existsByScopeAndSubscopeAndName(
         policy.getScope(), policy.getSubscope(), policy.getName());
   }
@@ -169,8 +203,9 @@ public class PolicyManagement {
   }
 
   /**
+   * Get the account type value for a tenant if it is set.
    *
-   * @param tenantId
+   * @param tenantId The tenant to lookup.
    * @return The accountType value for the tenant if it exists, otherwise null.
    */
   public String getAccountTypeByTenant(String tenantId) {
@@ -178,24 +213,29 @@ public class PolicyManagement {
     if (metadata == null) {
       return null;
     }
-    return metadata.getMetadata().get(TenantMetadataKeys.ACCOUNT_TYPE.getKey());
+    return metadata.getAccountType();
   }
 
-  public TenantMetadataDTO upsertTenantMetadata(String tenantId, String key, String value) {
+  /**
+   * Create or update the information stored relating to an individual tenant.
+   * @param tenantId The tenant to store this data under.
+   * @param input The data to alter.
+   * @return The full tenant information.
+   */
+  public TenantMetadataDTO upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
     TenantMetadata metadata = tenantMetadataRepository.findByTenantId(tenantId);
 
-    if (metadata == null) {
-      metadata = new TenantMetadata()
-          .setTenantId(tenantId)
-          .setMetadata(Collections.singletonMap(key, value));
+    PropertyMapper map = PropertyMapper.get();
+    map.from(tenantId)
+        .to(metadata::setTenantId);
+    map.from(input.getAccountType())
+        .whenNonNull()
+        .to(metadata::setAccountType);
+    map.from(input.getMetadata())
+        .whenNonNull()
+        .to(metadata::setMetadata);
 
-      tenantMetadataRepository.save(metadata);
-
-      return metadata.toDTO();
-    }
-
-    metadata.getMetadata().put(key, value);
-    tenantMetadataRepository.save(metadata);// need to verify that this saves the new values.  we might need to create a new map to store in the object vs. updating the existing one.
+    tenantMetadataRepository.save(metadata);
 
     return metadata.toDTO();
   }
