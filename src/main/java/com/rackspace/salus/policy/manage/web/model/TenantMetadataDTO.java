@@ -29,6 +29,8 @@ public class TenantMetadataDTO {
   @JsonView(View.Admin.class)
   String tenantId;
 
+  String accountType;
+
   Map<String,String> metadata;
 
   String createdTimestamp;

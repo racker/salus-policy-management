@@ -52,6 +52,7 @@ public class TenantMetadata {
   public TenantMetadataDTO toDTO() {
     return new TenantMetadataDTO()
         .setId(id)
+        .setAccountType(accountType)
         .setTenantId(tenantId)
         .setMetadata(metadata)
         .setCreatedTimestamp(DateTimeFormatter.ISO_INSTANT.format(createdTimestamp))

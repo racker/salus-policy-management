@@ -25,6 +25,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.monitor_management.web.client.MonitorApi;
@@ -38,29 +41,33 @@ import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
+import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
+import com.rackspace.salus.telemetry.messaging.PolicyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.co.jemos.podam.api.PodamFactory;
-import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({PolicyManagement.class})
+@Import({PolicyManagement.class, TenantManagement.class})
 public class PolicyManagementTest {
+
+  @Captor
+  ArgumentCaptor<PolicyEvent> policyEventArg;
 
   @MockBean
   PolicyEventProducer policyEventProducer;
@@ -75,6 +82,9 @@ public class PolicyManagementTest {
   PolicyManagement policyManagement;
 
   @Autowired
+  TenantManagement tenantManagement;
+
+  @Autowired
   PolicyRepository policyRepository;
 
   @Autowired
@@ -82,8 +92,6 @@ public class PolicyManagementTest {
 
   @Autowired
   TenantMetadataRepository tenantMetadataRepository;
-
-  private PodamFactory podamFactory = new PodamFactoryImpl();
 
   private MonitorPolicy defaultMonitorPolicy;
 
@@ -116,6 +124,8 @@ public class PolicyManagementTest {
 
   @Test
   public void testCreateMonitorPolicy() {
+    when(resourceApi.getAllDistinctTenantIds())
+        .thenReturn(Collections.singletonList("testCreateMonitorPolicy"));
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
@@ -130,6 +140,60 @@ public class PolicyManagementTest {
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(((MonitorPolicy)policy).getName(), equalTo(policyCreate.getName()));
     assertThat(((MonitorPolicy)policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
+
+    verify(resourceApi).getAllDistinctTenantIds();
+    verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
+    assertThat(policyEventArg.getValue(), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId("testCreateMonitorPolicy")
+    ));
+
+    verifyNoMoreInteractions(resourceApi, policyEventProducer);
+  }
+
+  @Test
+  public void testCreateMonitorPolicy_multipleTenants() {
+    when(resourceApi.getAllDistinctTenantIds())
+        .thenReturn(Arrays.asList("tenant1", "tenant2", "tenant3"));
+    MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
+        .setScope(Scope.ACCOUNT_TYPE)
+        .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setName(RandomStringUtils.randomAlphabetic(10))
+        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+
+    Policy policy = policyManagement.createMonitorPolicy(policyCreate);
+    assertTrue(policy instanceof MonitorPolicy);
+
+    assertThat(policy.getId(), notNullValue());
+    assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
+    assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
+    assertThat(((MonitorPolicy)policy).getName(), equalTo(policyCreate.getName()));
+    assertThat(((MonitorPolicy)policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
+
+    verify(resourceApi).getAllDistinctTenantIds();
+    verify(policyEventProducer, times(3)).sendPolicyEvent(policyEventArg.capture());
+    assertThat(policyEventArg.getAllValues().get(0), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId("tenant1")
+    ));
+    assertThat(policyEventArg.getAllValues().get(1), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId("tenant2")
+    ));
+    assertThat(policyEventArg.getAllValues().get(2), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId("tenant3")
+    ));
+
+    verifyNoMoreInteractions(resourceApi, policyEventProducer);
   }
 
   @Test

@@ -21,15 +21,12 @@ import com.rackspace.salus.policy.manage.entities.Policy;
 import com.rackspace.salus.policy.manage.services.PolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.PolicyDTO;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -40,7 +37,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -94,13 +90,5 @@ public class PolicyApiController {
   @JsonView(View.Admin.class)
   public void delete(@PathVariable UUID uuid) {
     policyManagement.removePolicy(uuid);
-  }
-
-  @PutMapping("/public/{tenantId}/account")
-  @ApiOperation(value = "Creates new Monitor for Tenant")
-  @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Monitor Policy")})
-  public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
-                                                @RequestBody TenantMetadataCU input) {
-    return policyManagement.upsertTenantMetadata(tenantId, input);
   }
 }

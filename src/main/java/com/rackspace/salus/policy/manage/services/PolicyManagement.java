@@ -19,14 +19,10 @@ package com.rackspace.salus.policy.manage.services;
 import com.rackspace.salus.monitor_management.web.client.MonitorApi;
 import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
 import com.rackspace.salus.policy.manage.entities.Policy;
-import com.rackspace.salus.policy.manage.entities.TenantMetadata;
 import com.rackspace.salus.policy.manage.model.Scope;
 import com.rackspace.salus.policy.manage.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.policy.manage.repositories.PolicyRepository;
-import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
@@ -41,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,25 +44,25 @@ public class PolicyManagement {
 
   private final PolicyRepository policyRepository;
   private final MonitorPolicyRepository monitorPolicyRepository;
-  private final TenantMetadataRepository tenantMetadataRepository;
   private final MonitorApi monitorApi;
   private final ResourceApi resourceApi;
   private final PolicyEventProducer policyEventProducer;
+  private final TenantManagement tenantManagement;
 
   @Autowired
   public PolicyManagement(
       PolicyRepository policyRepository,
       MonitorPolicyRepository monitorPolicyRepository,
-      TenantMetadataRepository tenantMetadataRepository,
       MonitorApi monitorApi,
       ResourceApi resourceApi,
-      PolicyEventProducer policyEventProducer) {
+      PolicyEventProducer policyEventProducer,
+      TenantManagement tenantManagement) {
     this.policyRepository = policyRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
-    this.tenantMetadataRepository = tenantMetadataRepository;
     this.monitorApi = monitorApi;
     this.resourceApi = resourceApi;
     this.policyEventProducer = policyEventProducer;
+    this.tenantManagement = tenantManagement;
   }
 
   /**
@@ -147,7 +142,7 @@ public class PolicyManagement {
    * @return True if the policy is relevant, even if it is currently overridden. False otherwise.
    */
   private boolean isPolicyApplicable(Policy policy, String tenantId) {
-    String accountType = getAccountTypeByTenant(tenantId);
+    String accountType = tenantManagement.getAccountTypeByTenant(tenantId);
 
     return policy.getScope().equals(Scope.GLOBAL) ||
         (policy.getScope().equals(Scope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
@@ -203,49 +198,10 @@ public class PolicyManagement {
   }
 
   /**
-   * Get the account type value for a tenant if it is set.
-   *
-   * @param tenantId The tenant to lookup.
-   * @return The accountType value for the tenant if it exists, otherwise null.
-   */
-  public String getAccountTypeByTenant(String tenantId) {
-    TenantMetadata metadata = tenantMetadataRepository.findByTenantId(tenantId);
-    if (metadata == null) {
-      return null;
-    }
-    return metadata.getAccountType();
-  }
-
-  /**
-   * Create or update the information stored relating to an individual tenant.
-   * @param tenantId The tenant to store this data under.
-   * @param input The data to alter.
-   * @return The full tenant information.
-   */
-  public TenantMetadataDTO upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
-    TenantMetadata metadata = tenantMetadataRepository.findByTenantId(tenantId);
-
-    PropertyMapper map = PropertyMapper.get();
-    map.from(tenantId)
-        .to(metadata::setTenantId);
-    map.from(input.getAccountType())
-        .whenNonNull()
-        .to(metadata::setAccountType);
-    map.from(input.getMetadata())
-        .whenNonNull()
-        .to(metadata::setMetadata);
-
-    tenantMetadataRepository.save(metadata);
-
-    return metadata.toDTO();
-  }
-
-  /**
    * Queries the ResourceAPI to retrieve all known tenants with at least one resource.
    * @return A list of tenant ids.
    */
   private List<String> getAllDistinctTenantIds() {
-    //return resourceApi.getAllDistinctTenantIds();
-    return Collections.singletonList("aaaaaa");
+    return resourceApi.getAllDistinctTenantIds();
   }
 }
