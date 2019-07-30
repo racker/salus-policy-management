@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.monitor_management.web.client.MonitorApi;
+import com.rackspace.salus.monitor_management.web.model.DetailedMonitorOutput;
 import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
 import com.rackspace.salus.policy.manage.entities.Policy;
 import com.rackspace.salus.policy.manage.entities.TenantMetadata;
@@ -50,7 +51,6 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -60,11 +60,15 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.co.jemos.podam.api.PodamFactory;
+import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
 @Import({PolicyManagement.class, TenantManagement.class})
 public class PolicyManagementTest {
+
+  private PodamFactory podamFactory = new PodamFactoryImpl();
 
   @Captor
   ArgumentCaptor<PolicyEvent> policyEventArg;
@@ -126,6 +130,9 @@ public class PolicyManagementTest {
   public void testCreateMonitorPolicy() {
     when(resourceApi.getAllDistinctTenantIds())
         .thenReturn(Collections.singletonList("testCreateMonitorPolicy"));
+    when(monitorApi.getPolicyMonitorById(anyString()))
+        .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
+
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
@@ -141,8 +148,10 @@ public class PolicyManagementTest {
     assertThat(((MonitorPolicy)policy).getName(), equalTo(policyCreate.getName()));
     assertThat(((MonitorPolicy)policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
 
+    verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
     verify(resourceApi).getAllDistinctTenantIds();
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
+
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
             .setMonitorId(policyCreate.getMonitorId())
@@ -150,13 +159,16 @@ public class PolicyManagementTest {
             .setTenantId("testCreateMonitorPolicy")
     ));
 
-    verifyNoMoreInteractions(resourceApi, policyEventProducer);
+    verifyNoMoreInteractions(monitorApi, resourceApi, policyEventProducer);
   }
 
   @Test
   public void testCreateMonitorPolicy_multipleTenants() {
     when(resourceApi.getAllDistinctTenantIds())
         .thenReturn(Arrays.asList("tenant1", "tenant2", "tenant3"));
+    when(monitorApi.getPolicyMonitorById(anyString()))
+        .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
+
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
@@ -172,6 +184,7 @@ public class PolicyManagementTest {
     assertThat(((MonitorPolicy)policy).getName(), equalTo(policyCreate.getName()));
     assertThat(((MonitorPolicy)policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
 
+    verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
     verify(resourceApi).getAllDistinctTenantIds();
     verify(policyEventProducer, times(3)).sendPolicyEvent(policyEventArg.capture());
     assertThat(policyEventArg.getAllValues().get(0), equalTo(
@@ -193,7 +206,7 @@ public class PolicyManagementTest {
             .setTenantId("tenant3")
     ));
 
-    verifyNoMoreInteractions(resourceApi, policyEventProducer);
+    verifyNoMoreInteractions(monitorApi, resourceApi, policyEventProducer);
   }
 
   @Test
@@ -213,7 +226,6 @@ public class PolicyManagementTest {
   }
 
   @Test
-  @Ignore
   public void testCreateMonitorPolicy_monitorDoesntExist() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.TENANT)
@@ -221,8 +233,8 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
 
-//    when(monitorApi.getPolicyMonitorById(anyString()))
-//        .thenReturn(false);
+    when(monitorApi.getPolicyMonitorById(anyString()))
+        .thenReturn(null);
 
     assertThatThrownBy(() -> policyManagement.createMonitorPolicy(policyCreate))
         .isInstanceOf(IllegalArgumentException.class)
@@ -230,6 +242,9 @@ public class PolicyManagementTest {
             String.format("Invalid monitor id provided: %s",
                 policyCreate.getMonitorId())
         );
+
+    verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
+    verifyNoMoreInteractions(monitorApi);
   }
 
   /**

@@ -168,8 +168,7 @@ public class PolicyManagement {
    * @return True if the monitor exists, otherwise false.
    */
   private boolean isValidMonitorId(String monitorId) {
-    //monitorApi.getPolicyMonitorById(monitorId)
-    return true; // temporary until monitor management is updated
+    return monitorApi.getPolicyMonitorById(monitorId) != null;
   }
 
   /**
