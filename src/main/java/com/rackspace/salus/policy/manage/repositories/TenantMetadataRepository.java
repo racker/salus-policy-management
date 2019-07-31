@@ -17,10 +17,11 @@
 package com.rackspace.salus.policy.manage.repositories;
 
 import com.rackspace.salus.policy.manage.entities.TenantMetadata;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface TenantMetadataRepository extends PagingAndSortingRepository<TenantMetadata, UUID> {
-  TenantMetadata findByTenantId(String tenantId);
+  Optional<TenantMetadata> findByTenantId(String tenantId);
 }
 

@@ -16,18 +16,25 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.policy.manage.services.TenantManagement;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
+import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -43,11 +50,30 @@ public class TenantApiController {
     this.tenantManagement = tenantManagement;
   }
 
-  @PutMapping("/public/{tenantId}/account")
+  @GetMapping("/public/account/{tenantId}")
+  @ApiOperation(value = "Retrieves miscellaneous information stored for a particular tenant")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully retrieved tenant metadata")})
+  @JsonView(View.Public.class)
+  public TenantMetadataDTO getTenantMetadata(@PathVariable String tenantId) {
+    return tenantManagement.getMetadata(tenantId).orElseThrow(
+        () -> new NotFoundException(String.format("No metadata found for tenant %s", tenantId))).toDTO();
+  }
+
+  @PutMapping("/public/account/{tenantId}")
   @ApiOperation(value = "Creates or updates miscellaneous information stored for a particular tenant")
-  @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Monitor Policy")})
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully updated tenant metadata")})
+  @JsonView(View.Public.class)
   public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
       @RequestBody TenantMetadataCU input) {
-    return tenantManagement.upsertTenantMetadata(tenantId, input);
+    return tenantManagement.upsertTenantMetadata(tenantId, input).toDTO();
+  }
+
+  @DeleteMapping("/public/account/{tenantId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ApiOperation(value = "Deletes all tenant metadata for an account")
+  @ApiResponses(value = { @ApiResponse(code = 204, message = "Successfully removed tenant metadata")})
+  @JsonView(View.Admin.class)
+  public void delete(@PathVariable String tenantId) {
+    tenantManagement.removeTenantMetadata(tenantId);
   }
 }

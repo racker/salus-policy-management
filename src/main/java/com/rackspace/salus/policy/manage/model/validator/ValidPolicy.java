@@ -25,7 +25,7 @@ import javax.validation.Constraint;
 import javax.validation.Payload;
 
 /**
- * Declares that the annotated parameter or field must be a private zone name.
+ * Declares that the annotated class must have valid scope and subscope values set.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

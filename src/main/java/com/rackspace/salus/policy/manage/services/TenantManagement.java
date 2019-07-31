@@ -19,7 +19,8 @@ package com.rackspace.salus.policy.manage.services;
 import com.rackspace.salus.policy.manage.entities.TenantMetadata;
 import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
+import com.rackspace.salus.telemetry.model.NotFoundException;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.stereotype.Service;
@@ -36,17 +37,26 @@ public class TenantManagement {
   }
 
   /**
+   * Gets all known tenant metadata for a single tenant.
+   * @param tenantId The tenant to get the info for.
+   * @return The full TenantMetadata object.
+   */
+  public Optional<TenantMetadata> getMetadata(String tenantId) {
+    return tenantMetadataRepository.findByTenantId(tenantId);
+  }
+
+  /**
    * Get the account type value for a tenant if it is set.
    *
    * @param tenantId The tenant to lookup.
    * @return The accountType value for the tenant if it exists, otherwise null.
    */
   public String getAccountTypeByTenant(String tenantId) {
-    TenantMetadata metadata = tenantMetadataRepository.findByTenantId(tenantId);
-    if (metadata == null) {
+    Optional<TenantMetadata> metadata = getMetadata(tenantId);
+    if (metadata.isEmpty()) {
       return null;
     }
-    return metadata.getAccountType();
+    return metadata.get().getAccountType();
   }
 
   /**
@@ -55,21 +65,35 @@ public class TenantManagement {
    * @param input The data to alter.
    * @return The full tenant information.
    */
-  public TenantMetadataDTO upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
-    TenantMetadata metadata = tenantMetadataRepository.findByTenantId(tenantId);
+  public TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
+    Optional<TenantMetadata> metadata = tenantMetadataRepository.findByTenantId(tenantId);
+
+    TenantMetadata updated;
+    if (metadata.isEmpty()) {
+      updated = new TenantMetadata()
+        .setTenantId(tenantId);
+    } else {
+      updated = metadata.get();
+    }
 
     PropertyMapper map = PropertyMapper.get();
-    map.from(tenantId)
-        .to(metadata::setTenantId);
     map.from(input.getAccountType())
         .whenNonNull()
-        .to(metadata::setAccountType);
+        .to(updated::setAccountType);
     map.from(input.getMetadata())
         .whenNonNull()
-        .to(metadata::setMetadata);
+        .to(updated::setMetadata);
 
-    tenantMetadataRepository.save(metadata);
+    tenantMetadataRepository.save(updated);
 
-    return metadata.toDTO();
+    return updated;
+  }
+
+  public void removeTenantMetadata(String tenantId) {
+    TenantMetadata metadata = getMetadata(tenantId).orElseThrow(() ->
+        new NotFoundException(
+            String.format("No metadata found for tenant %s", tenantId)));
+
+    tenantMetadataRepository.delete(metadata);
   }
 }

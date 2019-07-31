@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,11 +44,13 @@ import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.messaging.PolicyEvent;
+import com.rackspace.salus.telemetry.model.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -248,6 +250,49 @@ public class PolicyManagementTest {
   }
 
   /**
+   * This test verifies that the PolicyEvent contains the id that is actually stored in the db.
+   */
+  @Test
+  public void testPolicyEvent_monitorExistsAfterCreate() {
+    when(resourceApi.getAllDistinctTenantIds())
+        .thenReturn(Collections.singletonList("testPolicyEvent"));
+    when(monitorApi.getPolicyMonitorById(anyString()))
+        .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
+
+    // Create a monitor
+    MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
+        .setScope(Scope.ACCOUNT_TYPE)
+        .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setName(RandomStringUtils.randomAlphabetic(10))
+        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+
+    Policy policy = policyManagement.createMonitorPolicy(policyCreate);
+    verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
+    verify(resourceApi).getAllDistinctTenantIds();
+    verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
+
+    // Verify the Policy Event looks correct
+    assertThat(policyEventArg.getValue(), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId("testPolicyEvent")
+    ));
+
+    // Verify the monitor in the PolicyEvent can be found
+    Optional<Policy> saved = policyManagement.getPolicy(policyEventArg.getValue().getPolicyId());
+    assertTrue(saved.isPresent());
+
+    MonitorPolicy p = (MonitorPolicy) saved.get();
+    assertThat(p.getScope(), equalTo(policyCreate.getScope()));
+    assertThat(p.getSubscope(), equalTo(policyCreate.getSubscope()));
+    assertThat(p.getName(), equalTo(policyCreate.getName()));
+    assertThat(p.getMonitorId(), equalTo(policyCreate.getMonitorId()));
+
+    verifyNoMoreInteractions(monitorApi, resourceApi, policyEventProducer);
+  }
+
+  /**
    * This test saves numerous policies to the database while also adding certain ones to
    * the `expected` list.  This list is populated with those policies that we would expect
    * to be effective for the particular test tenant and account type.
@@ -337,5 +382,41 @@ public class PolicyManagementTest {
 
     assertThat(effectivePolicies, hasSize(5));
     assertThat(effectivePolicies, containsInAnyOrder(expected.toArray()));
+  }
+
+  @Test
+  public void testRemovePolicy() {
+    when(resourceApi.getAllDistinctTenantIds())
+        .thenReturn(Collections.singletonList("testRemovePolicy"));
+
+    // Create a policy to remove
+    MonitorPolicy saved = (MonitorPolicy) policyRepository.save(new MonitorPolicy()
+        .setMonitorId(RandomStringUtils.randomAlphabetic(10))
+        .setName(RandomStringUtils.randomAlphabetic(10))
+        .setScope(Scope.GLOBAL));
+
+    policyManagement.removePolicy(saved.getId());
+
+    verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
+
+    assertThat(policyEventArg.getValue(), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(saved.getMonitorId())
+            .setPolicyId(saved.getId())
+            .setTenantId("testRemovePolicy")
+    ));
+
+    Optional<Policy> removed = policyManagement.getPolicy(policyEventArg.getValue().getPolicyId());
+    assertTrue(removed.isEmpty());
+  }
+
+  @Test
+  public void testRemovePolicy_doesntExist() {
+    UUID id = UUID.randomUUID();
+    assertThatThrownBy(() -> policyManagement.removePolicy(id))
+        .isInstanceOf(NotFoundException.class)
+        .hasMessage(
+            String.format("No policy found with id %s", id)
+        );
   }
 }
