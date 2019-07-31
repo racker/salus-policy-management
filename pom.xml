@@ -26,9 +26,9 @@
     <relativePath>../salus-app-base</relativePath>
   </parent>
 
-  <artifactId>salus-policy-management</artifactId>
+  <artifactId>salus-telemetry-policy-management</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>salus-policy-management</name>
+  <name>salus-telemetry-policy-management</name>
   <description>Service for managing policies</description>
 
   <dependencies>
