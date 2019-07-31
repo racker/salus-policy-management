@@ -23,11 +23,13 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Entity
 @Table(name = "policy_monitors")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class MonitorPolicy extends Policy {
 
   @NotBlank

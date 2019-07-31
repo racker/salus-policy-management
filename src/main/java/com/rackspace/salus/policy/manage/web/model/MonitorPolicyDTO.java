@@ -17,8 +17,10 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class MonitorPolicyDTO extends PolicyDTO {
   String name;
   String monitorId;

@@ -26,6 +26,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
@@ -36,7 +37,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Entity
-@Table(name = "tenant_metadata")
+@Table(name = "tenant_metadata", indexes = {
+    @Index(name = "by_tenant", columnList = "tenant_id")
+})
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Data
 public class TenantMetadata {

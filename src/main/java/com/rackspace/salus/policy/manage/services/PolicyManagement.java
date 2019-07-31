@@ -114,7 +114,7 @@ public class PolicyManagement {
    * @return The list of effective monitor policies that should be applied to the tenant's resources.
    */
   public List<Policy> getEffectiveMonitorPoliciesForTenant(String tenantId) {
-    return new ArrayList<>(
+    return
         // Create a stream from all monitor policies
         StreamSupport.stream(monitorPolicyRepository.findAll().spliterator(), false)
             // Filter the stream for only those policies relevant to this tenant
@@ -131,7 +131,7 @@ public class PolicyManagement {
             // Filter out any of the optional objects that do not contain anything
             .filter(Optional::isPresent).map(Optional::get)
             // Finally convert to a list of the relevant monitor policies
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList());
   }
 
   /**

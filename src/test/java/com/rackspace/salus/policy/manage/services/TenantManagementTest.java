@@ -64,7 +64,6 @@ public class TenantManagementTest {
   @Test
   public void testGetMetadata() {
     TenantMetadata original = tenantMetadataRepository.save(podamFactory.manufacturePojo(TenantMetadata.class));
-    tenantManagement.getMetadata(original.getTenantId());
     Optional<TenantMetadata> metadata = tenantManagement.getMetadata(original.getTenantId());
     assertTrue(metadata.isPresent());
     assertThat(metadata.get(), equalTo(original));
