@@ -159,9 +159,7 @@ public class PolicyApiControllerTest {
         "/api/admin/policy/monitors/{uuid}", id)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
-        .andExpect(status().isNoContent())
-        .andExpect(content()
-            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+        .andExpect(status().isNoContent());
 
     verify(policyManagement).removePolicy(id);
     verifyNoMoreInteractions(policyManagement);
