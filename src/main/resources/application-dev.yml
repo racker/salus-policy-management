@@ -1,0 +1,25 @@
+server:
+  port: 8091
+salus:
+  services:
+    resourceManagementUrl: http://localhost:8085
+    monitorManagementUrl: http://localhost:8089
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    properties:
+      hibernate:
+        generate_statistics: false
+    show-sql: false
+  datasource:
+    username: dev
+    password: pass
+    url: jdbc:mysql://localhost:3306/default?verifyServerCertificate=false&useSSL=false&requireSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    platform: mysql
+logging:
+  level:
+    com.rackspace.salus: debug
+    web: debug

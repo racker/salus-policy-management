@@ -1,0 +1,21 @@
+salus:
+  environment: local
+management.endpoints.web.exposure.include: "health,jolokia,metrics"
+spring:
+  application:
+    name: salus-policy-management
+  kafka:
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-${salus.environment}
+      auto-offset-reset: latest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.rackspace.salus.telemetry.messaging
+  jackson:
+    mapper:
+      default-view-inclusion: true
