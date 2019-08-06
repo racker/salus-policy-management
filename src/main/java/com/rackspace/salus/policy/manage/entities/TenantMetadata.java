@@ -44,7 +44,7 @@ import org.hibernate.validator.constraints.NotBlank;
     @Index(name = "by_account_type", columnList = "account_type")
 })
 @NamedQueries({
-    @NamedQuery(name = "Tenant.getByAccountType",
+    @NamedQuery(name = "TenantMetadata.getByAccountType",
         query = "select distinct t.tenantId from TenantMetadata t where t.accountType = :accountType")
 })
 @TypeDef(name = "json", typeClass = JsonStringType.class)
