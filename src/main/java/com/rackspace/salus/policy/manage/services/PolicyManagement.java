@@ -27,7 +27,6 @@ import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -37,9 +36,11 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.persistence.EntityManager;
 import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class PolicyManagement {
 
@@ -93,6 +94,7 @@ public class PolicyManagement {
         .setScope(create.getScope());
 
     policyRepository.save(policy);
+    log.info("Stored new policy {}", policy);
     sendMonitorPolicyEvents((MonitorPolicy) policy);
 
     return policy;
@@ -162,6 +164,7 @@ public class PolicyManagement {
             String.format("No policy found with id %s", id)));
 
     policyRepository.deleteById(id);
+    log.info("Removed policy {}", policy);
     sendMonitorPolicyEvents((MonitorPolicy) policy);
   }
 
@@ -190,6 +193,7 @@ public class PolicyManagement {
    * @param policy The MonitorPolicy to distribute out to all tenants.
    */
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
+    log.info("Sending monitor policy events for {}", policy);
     List<String> tenantIds;
 
     switch(policy.getScope()) {
