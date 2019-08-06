@@ -130,14 +130,22 @@ public class PolicyManagementTest {
 
   @Test
   public void testCreateMonitorPolicy() {
-    when(resourceApi.getAllDistinctTenantIds())
-        .thenReturn(Collections.singletonList("testCreateMonitorPolicy"));
     when(monitorApi.getPolicyMonitorById(anyString()))
         .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
 
+    // Generate a random tenant and account type for the test
+    String accountType = RandomStringUtils.randomAlphabetic(10);
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+
+    // Store a default tenant in the db for that account type
+    tenantMetadataRepository.save(new TenantMetadata()
+        .setAccountType(accountType)
+        .setTenantId(tenantId)
+        .setMetadata(Collections.emptyMap()));
+
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.ACCOUNT_TYPE)
-        .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
 
@@ -151,14 +159,13 @@ public class PolicyManagementTest {
     assertThat(((MonitorPolicy)policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
 
     verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
-    verify(resourceApi).getAllDistinctTenantIds();
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
             .setMonitorId(policyCreate.getMonitorId())
             .setPolicyId(policy.getId())
-            .setTenantId("testCreateMonitorPolicy")
+            .setTenantId(tenantId)
     ));
 
     verifyNoMoreInteractions(monitorApi, resourceApi, policyEventProducer);
@@ -172,8 +179,7 @@ public class PolicyManagementTest {
         .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.ACCOUNT_TYPE)
-        .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setScope(Scope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
 
@@ -254,21 +260,28 @@ public class PolicyManagementTest {
    */
   @Test
   public void testPolicyEvent_monitorExistsAfterCreate() {
-    when(resourceApi.getAllDistinctTenantIds())
-        .thenReturn(Collections.singletonList("testPolicyEvent"));
     when(monitorApi.getPolicyMonitorById(anyString()))
         .thenReturn(podamFactory.manufacturePojo(DetailedMonitorOutput.class));
+
+    // Generate a random tenant and account type for the test
+    String accountType = RandomStringUtils.randomAlphabetic(10);
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+
+    // Store a default tenant in the db for that account type
+    tenantMetadataRepository.save(new TenantMetadata()
+        .setAccountType(accountType)
+        .setTenantId(tenantId)
+        .setMetadata(Collections.emptyMap()));
 
     // Create a monitor
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(Scope.ACCOUNT_TYPE)
-        .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
 
     Policy policy = policyManagement.createMonitorPolicy(policyCreate);
     verify(monitorApi).getPolicyMonitorById(policyCreate.getMonitorId());
-    verify(resourceApi).getAllDistinctTenantIds();
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
     // Verify the Policy Event looks correct
@@ -276,7 +289,7 @@ public class PolicyManagementTest {
         new MonitorPolicyEvent()
             .setMonitorId(policyCreate.getMonitorId())
             .setPolicyId(policy.getId())
-            .setTenantId("testPolicyEvent")
+            .setTenantId(tenantId)
     ));
 
     // Verify the monitor in the PolicyEvent can be found

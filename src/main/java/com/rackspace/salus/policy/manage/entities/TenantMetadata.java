@@ -27,6 +27,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
@@ -38,7 +40,12 @@ import org.hibernate.validator.constraints.NotBlank;
 
 @Entity
 @Table(name = "tenant_metadata", indexes = {
-    @Index(name = "by_tenant", columnList = "tenant_id")
+    @Index(name = "by_tenant", columnList = "tenant_id"),
+    @Index(name = "by_account_type", columnList = "account_type")
+})
+@NamedQueries({
+    @NamedQuery(name = "TenantMetadata.getByAccountType",
+        query = "select distinct t.tenantId from TenantMetadata t where t.accountType = :accountType")
 })
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Data
