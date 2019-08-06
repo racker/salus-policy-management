@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.persistence.EntityManager;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class PolicyManagement {
   private final ResourceApi resourceApi;
   private final PolicyEventProducer policyEventProducer;
   private final TenantManagement tenantManagement;
+  private final EntityManager entityManager;
 
   @Autowired
   public PolicyManagement(
@@ -56,13 +58,14 @@ public class PolicyManagement {
       MonitorApi monitorApi,
       ResourceApi resourceApi,
       PolicyEventProducer policyEventProducer,
-      TenantManagement tenantManagement) {
+      TenantManagement tenantManagement, EntityManager entityManager) {
     this.policyRepository = policyRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
     this.monitorApi = monitorApi;
     this.resourceApi = resourceApi;
     this.policyEventProducer = policyEventProducer;
     this.tenantManagement = tenantManagement;
+    this.entityManager = entityManager;
   }
 
   /**
@@ -187,7 +190,22 @@ public class PolicyManagement {
    * @param policy The MonitorPolicy to distribute out to all tenants.
    */
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
-    List<String> tenantIds = getAllDistinctTenantIds();
+    List<String> tenantIds;
+
+    switch(policy.getScope()) {
+      case GLOBAL:
+        tenantIds = getAllDistinctTenantIds();
+        break;
+      case ACCOUNT_TYPE:
+        tenantIds = getTenantsWithAccountType(policy.getSubscope());
+        break;
+      case TENANT:
+        tenantIds = Collections.singletonList(policy.getSubscope());
+        break;
+      default:
+        tenantIds = Collections.emptyList();
+        break;
+    }
     tenantIds.stream()
         .map(tenantId -> new MonitorPolicyEvent()
             .setMonitorId(policy.getMonitorId())
@@ -202,5 +220,12 @@ public class PolicyManagement {
    */
   private List<String> getAllDistinctTenantIds() {
     return resourceApi.getAllDistinctTenantIds();
+  }
+
+  private List<String> getTenantsWithAccountType(String accountType) {
+    return entityManager
+        .createNamedQuery("Tenant.getByAccountType", String.class)
+        .setParameter("accountType", accountType)
+        .getResultList();
   }
 }
