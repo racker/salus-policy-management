@@ -228,7 +228,7 @@ public class PolicyManagement {
 
   private List<String> getTenantsWithAccountType(String accountType) {
     return entityManager
-        .createNamedQuery("Tenant.getByAccountType", String.class)
+        .createNamedQuery("TenantMetadata.getByAccountType", String.class)
         .setParameter("accountType", accountType)
         .getResultList();
   }
