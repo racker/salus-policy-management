@@ -16,7 +16,7 @@
 
 package com.rackspace.salus.policy.manage.repositories;
 
-import com.rackspace.salus.policy.manage.entities.Policy;
+import com.rackspace.salus.telemetry.entities.Policy;
 import java.util.UUID;
 import org.springframework.data.repository.PagingAndSortingRepository;
 

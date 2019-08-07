@@ -17,7 +17,9 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.model.View;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
@@ -35,4 +37,12 @@ public class TenantMetadataDTO {
 
   String createdTimestamp;
   String updatedTimestamp;
+
+  public TenantMetadataDTO(TenantMetadata tenantMetadata) {
+    this.id = tenantMetadata.getId();
+    this.accountType = tenantMetadata.getAccountType();
+    this.metadata = tenantMetadata.getMetadata();
+    this.createdTimestamp = DateTimeFormatter.ISO_INSTANT.format(tenantMetadata.getCreatedTimestamp());
+    this.updatedTimestamp = DateTimeFormatter.ISO_INSTANT.format(tenantMetadata.getUpdatedTimestamp());
+  }
 }

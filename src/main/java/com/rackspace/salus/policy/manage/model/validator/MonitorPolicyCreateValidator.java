@@ -21,7 +21,7 @@ import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
   @Override
   protected Enum getScope(MonitorPolicyCreate policy) {
-    return policy.getScope();
+    return policy.getPolicyScope();
   }
 
   @Override

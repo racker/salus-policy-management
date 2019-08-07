@@ -16,13 +16,13 @@
 
 package com.rackspace.salus.policy.manage.repositories;
 
-import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
-import com.rackspace.salus.policy.manage.model.Scope;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import java.util.UUID;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface MonitorPolicyRepository extends PagingAndSortingRepository<MonitorPolicy, UUID> {
 
-  boolean existsByScopeAndSubscopeAndName(Scope scope, String subscope, String name);
+  boolean existsByScopeAndSubscopeAndName(PolicyScope policyScope, String subscope, String name);
 
 }

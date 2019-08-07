@@ -16,7 +16,7 @@
 
 package com.rackspace.salus.policy.manage.model.validator;
 
-import com.rackspace.salus.policy.manage.model.Scope;
+import com.rackspace.salus.telemetry.model.PolicyScope;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
@@ -28,9 +28,9 @@ public abstract class PolicyValidator<T> implements ConstraintValidator<ValidPol
   public boolean isValid(T value, ConstraintValidatorContext context) {
     return
         // true if scope is global and subset is not set
-        (getScope(value).equals(Scope.GLOBAL) && !isSubscopeSet(value)) ||
+        (getScope(value).equals(PolicyScope.GLOBAL) && !isSubscopeSet(value)) ||
             // or true if scope is not global and subset is set
-            (!getScope(value).equals(Scope.GLOBAL) && isSubscopeSet(value));
+            (!getScope(value).equals(PolicyScope.GLOBAL) && isSubscopeSet(value));
   }
 
   protected abstract Enum getScope(T value);

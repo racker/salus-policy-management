@@ -30,9 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
-import com.rackspace.salus.policy.manage.entities.Policy;
-import com.rackspace.salus.policy.manage.model.Scope;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.entities.MonitorPolicy;
+import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.policy.manage.services.PolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import java.time.Instant;
@@ -72,15 +72,15 @@ public class PolicyApiControllerTest {
 
   @Test
   public void testGetById() throws Exception {
-    Policy policy = new MonitorPolicy()
+    MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
         .setMonitorId("1234-5678-0987")
         .setName("Test Name")
-        .setScope(Scope.GLOBAL)
+        .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(policyManagement.getPolicy(any()))
+    when(policyManagement.getMonitorPolicy(any()))
         .thenReturn(Optional.of(policy));
 
     mvc.perform(get(
@@ -93,14 +93,14 @@ public class PolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_policy.json"), true));
 
-    verify(policyManagement).getPolicy(policy.getId());
+    verify(policyManagement).getMonitorPolicy(policy.getId());
     verifyNoMoreInteractions(policyManagement);
   }
 
   @Test
   public void testGetEffectivePoliciesByTenantId() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    final List<Policy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorPolicy.class);
+    final List<MonitorPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorPolicy.class);
     when(policyManagement.getEffectiveMonitorPoliciesForTenant(anyString()))
         .thenReturn(listOfPolicies);
 
@@ -119,10 +119,10 @@ public class PolicyApiControllerTest {
 
   @Test
   public void testCreatePolicy() throws Exception {
-    Policy policy = new MonitorPolicy()
+    MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
         .setMonitorId("1234-5678-0987")
         .setName("Test Name")
-        .setScope(Scope.GLOBAL)
+        .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
@@ -132,7 +132,7 @@ public class PolicyApiControllerTest {
 
     // All we need is a valid create object; doesn't matter what else is set.
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.ACCOUNT_TYPE)
+        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
@@ -153,7 +153,7 @@ public class PolicyApiControllerTest {
   }
 
   @Test
-  public void testRemovePolicy() throws Exception {
+  public void testRemoveMonitorPolicy() throws Exception {
     UUID id = UUID.randomUUID();
     mvc.perform(delete(
         "/api/admin/policy/monitors/{uuid}", id)
@@ -161,7 +161,7 @@ public class PolicyApiControllerTest {
         .andDo(print())
         .andExpect(status().isNoContent());
 
-    verify(policyManagement).removePolicy(id);
+    verify(policyManagement).removeMonitorPolicy(id);
     verifyNoMoreInteractions(policyManagement);
   }
 

@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
+import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,4 +25,10 @@ import lombok.EqualsAndHashCode;
 public class MonitorPolicyDTO extends PolicyDTO {
   String name;
   String monitorId;
+
+  public MonitorPolicyDTO(MonitorPolicy policy) {
+    super(policy);
+    this.name = policy.getName();
+    this.monitorId = policy.getMonitorId();
+  }
 }

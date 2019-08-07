@@ -16,15 +16,25 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.policy.manage.model.Scope;
+import com.rackspace.salus.telemetry.entities.Policy;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.Data;
 
 @Data
 public abstract class PolicyDTO {
   UUID id;
-  Scope scope;
+  PolicyScope scope;
   String subscope;
   String createdTimestamp;
   String updatedTimestamp;
+
+  public PolicyDTO(Policy policy) {
+    this.id = policy.getId();
+    this.scope = policy.getScope();
+    this.subscope = policy.getSubscope();
+    this.createdTimestamp = DateTimeFormatter.ISO_INSTANT.format(policy.getCreatedTimestamp());
+    this.updatedTimestamp = DateTimeFormatter.ISO_INSTANT.format(policy.getUpdatedTimestamp());
+  }
 }

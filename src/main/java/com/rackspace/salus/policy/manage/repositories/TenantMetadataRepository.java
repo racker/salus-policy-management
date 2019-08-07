@@ -16,7 +16,7 @@
 
 package com.rackspace.salus.policy.manage.repositories;
 
-import com.rackspace.salus.policy.manage.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.repository.PagingAndSortingRepository;

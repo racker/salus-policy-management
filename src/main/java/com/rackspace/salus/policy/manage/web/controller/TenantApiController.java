@@ -55,8 +55,9 @@ public class TenantApiController {
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully retrieved tenant metadata")})
   @JsonView(View.Public.class)
   public TenantMetadataDTO getTenantMetadata(@PathVariable String tenantId) {
-    return tenantManagement.getMetadata(tenantId).orElseThrow(
-        () -> new NotFoundException(String.format("No metadata found for tenant %s", tenantId))).toDTO();
+    return new TenantMetadataDTO(
+        tenantManagement.getMetadata(tenantId).orElseThrow(
+            () -> new NotFoundException(String.format("No metadata found for tenant %s", tenantId))));
   }
 
   @PutMapping("/public/account/{tenantId}")
@@ -65,7 +66,7 @@ public class TenantApiController {
   @JsonView(View.Public.class)
   public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
       @RequestBody TenantMetadataCU input) {
-    return tenantManagement.upsertTenantMetadata(tenantId, input).toDTO();
+    return new TenantMetadataDTO(tenantManagement.upsertTenantMetadata(tenantId, input));
   }
 
   @DeleteMapping("/public/account/{tenantId}")

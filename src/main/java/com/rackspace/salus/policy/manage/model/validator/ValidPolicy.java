@@ -30,7 +30,7 @@ import javax.validation.Payload;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Constraint(validatedBy = {PolicyEntityValidator.class, MonitorPolicyCreateValidator.class})
+@Constraint(validatedBy = {MonitorPolicyCreateValidator.class})
 public @interface ValidPolicy {
 
   String message() default "subscope must be set for any non-global policy but not for global policies";
