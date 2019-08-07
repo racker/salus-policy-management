@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.model.validator;
+package com.rackspace.salus.policy.manage.web.model.validator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

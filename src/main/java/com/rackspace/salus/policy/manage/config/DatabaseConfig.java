@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.repositories;
+package com.rackspace.salus.policy.manage.config;
 
-import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-public interface TenantMetadataRepository extends PagingAndSortingRepository<TenantMetadata, UUID> {
-  Optional<TenantMetadata> findByTenantId(String tenantId);
+@EntityScan("com.rackspace.salus.telemetry.entities")
+@EnableJpaRepositories("com.rackspace.salus.telemetry.repositories")
+@Configuration
+public class DatabaseConfig {
+
 }
-

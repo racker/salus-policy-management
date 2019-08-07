@@ -17,7 +17,7 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.policy.manage.model.validator.ValidPolicy;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import lombok.Data;

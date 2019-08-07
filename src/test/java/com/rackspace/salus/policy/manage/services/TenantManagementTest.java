@@ -22,8 +22,9 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +42,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({TenantManagement.class})
+@Import({TenantManagement.class, DatabaseConfig.class})
 public class TenantManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();

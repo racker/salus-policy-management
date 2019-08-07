@@ -21,12 +21,10 @@ import com.rackspace.salus.common.web.EnableExtendedErrorAttributes;
 import com.rackspace.salus.common.util.DumpConfigProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @SpringBootApplication
 @EnableSalusKafkaMessaging
 @EnableExtendedErrorAttributes
-@EntityScan("com.rackspace.salus.telemetry.entities")
 public class PolicyManagementApplication {
 
   public static void main(String[] args) {

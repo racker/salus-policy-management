@@ -17,7 +17,7 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import java.util.Optional;

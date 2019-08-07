@@ -32,13 +32,14 @@ import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.monitor_management.web.client.MonitorApi;
 import com.rackspace.salus.monitor_management.web.model.DetailedMonitorOutput;
+import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.policy.manage.repositories.MonitorPolicyRepository;
-import com.rackspace.salus.policy.manage.repositories.PolicyRepository;
-import com.rackspace.salus.policy.manage.repositories.TenantMetadataRepository;
+import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
+import com.rackspace.salus.telemetry.repositories.PolicyRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -67,7 +68,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({PolicyManagement.class, TenantManagement.class})
+@Import({PolicyManagement.class, TenantManagement.class, DatabaseConfig.class})
 public class PolicyManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
