@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.repositories;
+package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
-import com.rackspace.salus.policy.manage.model.Scope;
-import java.util.UUID;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 
-public interface MonitorPolicyRepository extends PagingAndSortingRepository<MonitorPolicy, UUID> {
+public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
+  @Override
+  protected Enum getScope(MonitorPolicyCreate policy) {
+    return policy.getPolicyScope();
+  }
 
-  boolean existsByScopeAndSubscopeAndName(Scope scope, String subscope, String name);
-
+  @Override
+  protected boolean isSubscopeSet(MonitorPolicyCreate policy) {
+    return policy.getSubscope() != null && !policy.getSubscope().isBlank();
+  }
 }

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.repositories;
+package com.rackspace.salus.policy.manage.config;
 
-import com.rackspace.salus.policy.manage.entities.Policy;
-import java.util.UUID;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-public interface PolicyRepository extends PagingAndSortingRepository<Policy, UUID> {
+@EntityScan("com.rackspace.salus.telemetry.entities")
+@EnableJpaRepositories("com.rackspace.salus.telemetry.repositories")
+@Configuration
+public class DatabaseConfig {
 
 }

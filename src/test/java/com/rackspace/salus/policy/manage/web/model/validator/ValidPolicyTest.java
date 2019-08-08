@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.model.validator;
+package com.rackspace.salus.policy.manage.web.model.validator;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
-import com.rackspace.salus.policy.manage.model.Scope;
+import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
@@ -42,7 +42,7 @@ public class ValidPolicyTest {
   @Test
   public void testValidGlobal() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.GLOBAL)
+        .setPolicyScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
 
@@ -54,7 +54,7 @@ public class ValidPolicyTest {
   @Test
   public void testInvalidGlobal() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.GLOBAL)
+        .setPolicyScope(PolicyScope.GLOBAL)
         .setSubscope("Subscope is not allowed for global scoped policies")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
@@ -70,7 +70,7 @@ public class ValidPolicyTest {
   @Test
   public void testValidAccountType() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.ACCOUNT_TYPE)
+        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("Subscope is required")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));
@@ -83,7 +83,7 @@ public class ValidPolicyTest {
   @Test
   public void testInvalidAccountType() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setScope(Scope.ACCOUNT_TYPE)
+        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(RandomStringUtils.randomAlphabetic(10));

@@ -17,11 +17,11 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.monitor_management.web.client.MonitorApi;
-import com.rackspace.salus.policy.manage.entities.MonitorPolicy;
-import com.rackspace.salus.policy.manage.entities.Policy;
-import com.rackspace.salus.policy.manage.model.Scope;
-import com.rackspace.salus.policy.manage.repositories.MonitorPolicyRepository;
-import com.rackspace.salus.policy.manage.repositories.PolicyRepository;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.entities.MonitorPolicy;
+import com.rackspace.salus.telemetry.entities.Policy;
+import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
+import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -77,25 +77,25 @@ public class PolicyManagement {
    * @throws AlreadyExistsException if an equivalent policy already exists.
    * @throws IllegalArgumentException if the parameters provided are not valid.
    */
-  public Policy createMonitorPolicy(@Valid MonitorPolicyCreate create)
+  public MonitorPolicy createMonitorPolicy(@Valid MonitorPolicyCreate create)
       throws AlreadyExistsException, IllegalArgumentException {
     if (exists(create)) {
       throw new AlreadyExistsException(String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
-          create.getScope(), create.getSubscope(), create.getName()));
+          create.getPolicyScope(), create.getSubscope(), create.getName()));
     }
     if (!isValidMonitorId(create.getMonitorId())) {
       throw new IllegalArgumentException(String.format("Invalid monitor id provided: %s",
           create.getMonitorId()));
     }
-    Policy policy = new MonitorPolicy()
+    MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
         .setMonitorId(create.getMonitorId())
         .setName(create.getName())
         .setSubscope(create.getSubscope())
-        .setScope(create.getScope());
+        .setScope(create.getPolicyScope());
 
-    policyRepository.save(policy);
+    monitorPolicyRepository.save(policy);
     log.info("Stored new policy {}", policy);
-    sendMonitorPolicyEvents((MonitorPolicy) policy);
+    sendMonitorPolicyEvents(policy);
 
     return policy;
   }
@@ -109,6 +109,10 @@ public class PolicyManagement {
     return policyRepository.findById(id);
   }
 
+  public Optional<MonitorPolicy> getMonitorPolicy(UUID id) {
+    return monitorPolicyRepository.findById(id);
+  }
+
   /**
    * Gets all the monitor policies relevant to a tenant.
    *
@@ -118,7 +122,7 @@ public class PolicyManagement {
    * @param tenantId The tenantId to retrieve policies for.
    * @return The list of effective monitor policies that should be applied to the tenant's resources.
    */
-  public List<Policy> getEffectiveMonitorPoliciesForTenant(String tenantId) {
+  public List<MonitorPolicy> getEffectiveMonitorPoliciesForTenant(String tenantId) {
     return
         // Create a stream from all monitor policies
         StreamSupport.stream(monitorPolicyRepository.findAll().spliterator(), false)
@@ -149,23 +153,23 @@ public class PolicyManagement {
   private boolean isPolicyApplicable(Policy policy, String tenantId) {
     String accountType = tenantManagement.getAccountTypeByTenant(tenantId);
 
-    return policy.getScope().equals(Scope.GLOBAL) ||
-        (policy.getScope().equals(Scope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
-        (policy.getScope().equals(Scope.TENANT) && policy.getSubscope().equals(tenantId));
+    return policy.getScope().equals(PolicyScope.GLOBAL) ||
+        (policy.getScope().equals(PolicyScope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
+        (policy.getScope().equals(PolicyScope.TENANT) && policy.getSubscope().equals(tenantId));
   }
 
   /**
-   * Removes the policy from the database and sends policy events for each tenant.
+   * Removes the monitor policy from the database and sends policy events for each tenant.
    * @param id The id of the policy to remove.
    */
-  public void removePolicy(UUID id) {
-    Policy policy = getPolicy(id).orElseThrow(() ->
+  public void removeMonitorPolicy(UUID id) {
+    MonitorPolicy policy = getMonitorPolicy(id).orElseThrow(() ->
         new NotFoundException(
             String.format("No policy found with id %s", id)));
 
     policyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
-    sendMonitorPolicyEvents((MonitorPolicy) policy);
+    sendMonitorPolicyEvents(policy);
   }
 
   /**
@@ -185,7 +189,7 @@ public class PolicyManagement {
    */
   private boolean exists(MonitorPolicyCreate policy) {
     return monitorPolicyRepository.existsByScopeAndSubscopeAndName(
-        policy.getScope(), policy.getSubscope(), policy.getName());
+        policy.getPolicyScope(), policy.getSubscope(), policy.getName());
   }
 
   /**

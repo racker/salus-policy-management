@@ -17,7 +17,7 @@
 package com.rackspace.salus.policy.manage.web.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.policy.manage.entities.Policy;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.policy.manage.services.PolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.PolicyDTO;
@@ -56,12 +56,13 @@ public class PolicyApiController {
   }
 
   @GetMapping("/admin/policy/monitors/{uuid}")
-  @ApiOperation(value = "Gets specific Policy by id")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Policy Retrieved")})
+  @ApiOperation(value = "Gets specific Monitor Policy by id")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor Policy Retrieved")})
   @JsonView(View.Admin.class)
-  public PolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
-    return policyManagement.getPolicy(uuid).orElseThrow(
-        () -> new NotFoundException(String.format("No policy found with id %s", uuid))).toDTO();
+  public MonitorPolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
+    return new MonitorPolicyDTO(
+        policyManagement.getMonitorPolicy(uuid).orElseThrow(
+            () -> new NotFoundException(String.format("No policy found with id %s", uuid))));
   }
 
   @GetMapping("/admin/policy/monitors/effective/{tenantId}")
@@ -70,7 +71,7 @@ public class PolicyApiController {
   @JsonView(View.Admin.class)
   public List<PolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
     return policyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
-        .stream().map(Policy::toDTO).collect(Collectors.toList());
+        .stream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
   }
 
   @PostMapping("/admin/policy/monitors")
@@ -78,17 +79,17 @@ public class PolicyApiController {
   @ApiOperation(value = "Creates new Monitor for Tenant")
   @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Monitor Policy")})
   @JsonView(View.Admin.class)
-  public PolicyDTO create(@Valid @RequestBody final MonitorPolicyCreate input)
+  public MonitorPolicyDTO create(@Valid @RequestBody final MonitorPolicyCreate input)
       throws IllegalArgumentException {
-    return policyManagement.createMonitorPolicy(input).toDTO();
+    return new MonitorPolicyDTO(policyManagement.createMonitorPolicy(input));
   }
 
   @DeleteMapping("/admin/policy/monitors/{uuid}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @ApiOperation(value = "Deletes specific Policy")
-  @ApiResponses(value = { @ApiResponse(code = 204, message = "Policy Deleted")})
+  @ApiOperation(value = "Deletes specific Monitor Policy")
+  @ApiResponses(value = { @ApiResponse(code = 204, message = "Monitor Policy Deleted")})
   @JsonView(View.Admin.class)
   public void delete(@PathVariable UUID uuid) {
-    policyManagement.removePolicy(uuid);
+    policyManagement.removeMonitorPolicy(uuid);
   }
 }
