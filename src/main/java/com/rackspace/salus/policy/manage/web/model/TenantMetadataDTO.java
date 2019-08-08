@@ -40,6 +40,7 @@ public class TenantMetadataDTO {
 
   public TenantMetadataDTO(TenantMetadata tenantMetadata) {
     this.id = tenantMetadata.getId();
+    this.tenantId = tenantMetadata.getTenantId();
     this.accountType = tenantMetadata.getAccountType();
     this.metadata = tenantMetadata.getMetadata();
     this.createdTimestamp = DateTimeFormatter.ISO_INSTANT.format(tenantMetadata.getCreatedTimestamp());
