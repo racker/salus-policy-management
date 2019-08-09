@@ -73,7 +73,7 @@ public class PolicyApiControllerTest {
   @Test
   public void testGetById() throws Exception {
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId("1234-5678-0987")
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
@@ -120,7 +120,7 @@ public class PolicyApiControllerTest {
   @Test
   public void testCreatePolicy() throws Exception {
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId("1234-5678-0987")
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
@@ -135,7 +135,7 @@ public class PolicyApiControllerTest {
         .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     mvc.perform(post(
         "/api/admin/policy/monitors")

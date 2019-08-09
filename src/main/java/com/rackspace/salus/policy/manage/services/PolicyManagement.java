@@ -16,17 +16,18 @@
 
 package com.rackspace.salus.policy.manage.services;
 
-import com.rackspace.salus.monitor_management.web.client.MonitorApi;
+import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
+import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
-import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -44,26 +45,26 @@ import org.springframework.stereotype.Service;
 @Service
 public class PolicyManagement {
 
+  private final ResourceRepository resourceRepository;
+  private final MonitorRepository monitorRepository;
   private final PolicyRepository policyRepository;
   private final MonitorPolicyRepository monitorPolicyRepository;
-  private final MonitorApi monitorApi;
-  private final ResourceApi resourceApi;
   private final PolicyEventProducer policyEventProducer;
   private final TenantManagement tenantManagement;
   private final EntityManager entityManager;
 
   @Autowired
   public PolicyManagement(
+      ResourceRepository resourceRepository,
+      MonitorRepository monitorRepository,
       PolicyRepository policyRepository,
       MonitorPolicyRepository monitorPolicyRepository,
-      MonitorApi monitorApi,
-      ResourceApi resourceApi,
       PolicyEventProducer policyEventProducer,
       TenantManagement tenantManagement, EntityManager entityManager) {
+    this.resourceRepository = resourceRepository;
+    this.monitorRepository = monitorRepository;
     this.policyRepository = policyRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
-    this.monitorApi = monitorApi;
-    this.resourceApi = resourceApi;
     this.policyEventProducer = policyEventProducer;
     this.tenantManagement = tenantManagement;
     this.entityManager = entityManager;
@@ -173,12 +174,12 @@ public class PolicyManagement {
   }
 
   /**
-   * Tests whether the monitor exists in the MonitorManagement service.
+   * Tests whether the policy monitor exists in the MonitorManagement service.
    * @param monitorId The monitor to lookup.
    * @return True if the monitor exists, otherwise false.
    */
-  private boolean isValidMonitorId(String monitorId) {
-    return monitorApi.getPolicyMonitorById(monitorId) != null;
+  private boolean isValidMonitorId(UUID monitorId) {
+    return monitorRepository.existsByIdAndTenantId(monitorId, Monitor.POLICY_TENANT);
   }
 
   /**
@@ -223,11 +224,13 @@ public class PolicyManagement {
   }
 
   /**
-   * Queries the ResourceAPI to retrieve all known tenants with at least one resource.
+   * Gets a list of all tenants that have at least one resource.
    * @return A list of tenant ids.
    */
-  private List<String> getAllDistinctTenantIds() {
-    return resourceApi.getAllDistinctTenantIds();
+  public List<String> getAllDistinctTenantIds() {
+    return entityManager
+        .createNamedQuery("Resource.getAllDistinctTenants", String.class)
+        .getResultList();
   }
 
   private List<String> getTenantsWithAccountType(String accountType) {

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThat;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import java.util.Set;
+import java.util.UUID;
 import javax.validation.ConstraintViolation;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
@@ -44,7 +45,7 @@ public class ValidPolicyTest {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setPolicyScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -57,7 +58,7 @@ public class ValidPolicyTest {
         .setPolicyScope(PolicyScope.GLOBAL)
         .setSubscope("Subscope is not allowed for global scoped policies")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -73,7 +74,7 @@ public class ValidPolicyTest {
         .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("Subscope is required")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -86,7 +87,7 @@ public class ValidPolicyTest {
         .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(RandomStringUtils.randomAlphabetic(10));
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
