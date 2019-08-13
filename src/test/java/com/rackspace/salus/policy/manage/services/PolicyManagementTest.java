@@ -146,14 +146,14 @@ public class PolicyManagementTest {
         .setMetadata(Collections.emptyMap()));
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
+        .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
 
     MonitorPolicy policy = policyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
-    assertThat(policy.getScope(), equalTo(policyCreate.getPolicyScope()));
+    assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(policy.getName(), equalTo(policyCreate.getName()));
     assertThat(policy.getMonitorId(), equalTo(monitor.getId()));
@@ -176,13 +176,13 @@ public class PolicyManagementTest {
     Monitor monitor = createPolicyMonitor();
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.GLOBAL)
+        .setScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
 
     MonitorPolicy policy = policyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
-    assertThat(policy.getScope(), equalTo(policyCreate.getPolicyScope()));
+    assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat((policy).getName(), equalTo(policyCreate.getName()));
     assertThat((policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
@@ -203,7 +203,7 @@ public class PolicyManagementTest {
   @Test
   public void testCreateMonitorPolicy_duplicatePolicy() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(defaultMonitorPolicy.getScope())
+        .setScope(defaultMonitorPolicy.getScope())
         .setSubscope(defaultMonitorPolicy.getSubscope())
         .setName(defaultMonitorPolicy.getName())
         .setMonitorId(UUID.randomUUID());
@@ -212,14 +212,14 @@ public class PolicyManagementTest {
       .isInstanceOf(AlreadyExistsException.class)
       .hasMessage(
           String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
-              policyCreate.getPolicyScope(), policyCreate.getSubscope(), policyCreate.getName())
+              policyCreate.getScope(), policyCreate.getSubscope(), policyCreate.getName())
       );
   }
 
   @Test
   public void testCreateMonitorPolicy_monitorDoesntExist() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.TENANT)
+        .setScope(PolicyScope.TENANT)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.randomUUID());
@@ -251,7 +251,7 @@ public class PolicyManagementTest {
 
     // Create a monitor
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
+        .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
@@ -272,7 +272,7 @@ public class PolicyManagementTest {
     assertTrue(saved.isPresent());
 
     MonitorPolicy p = saved.get();
-    assertThat(p.getScope(), equalTo(policyCreate.getPolicyScope()));
+    assertThat(p.getScope(), equalTo(policyCreate.getScope()));
     assertThat(p.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(p.getName(), equalTo(policyCreate.getName()));
     assertThat(p.getMonitorId(), equalTo(policyCreate.getMonitorId()));

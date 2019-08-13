@@ -17,6 +17,7 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.telemetry.entities.Monitor;
+import com.rackspace.salus.telemetry.messaging.PolicyMonitorUpdateEvent;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
@@ -82,7 +83,7 @@ public class PolicyManagement {
       throws AlreadyExistsException, IllegalArgumentException {
     if (exists(create)) {
       throw new AlreadyExistsException(String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
-          create.getPolicyScope(), create.getSubscope(), create.getName()));
+          create.getScope(), create.getSubscope(), create.getName()));
     }
     if (!isValidMonitorId(create.getMonitorId())) {
       throw new IllegalArgumentException(String.format("Invalid monitor id provided: %s",
@@ -92,7 +93,7 @@ public class PolicyManagement {
         .setMonitorId(create.getMonitorId())
         .setName(create.getName())
         .setSubscope(create.getSubscope())
-        .setScope(create.getPolicyScope());
+        .setScope(create.getScope());
 
     monitorPolicyRepository.save(policy);
     log.info("Stored new policy {}", policy);
@@ -112,6 +113,13 @@ public class PolicyManagement {
 
   public Optional<MonitorPolicy> getMonitorPolicy(UUID id) {
     return monitorPolicyRepository.findById(id);
+  }
+
+  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId) {
+    return getEffectiveMonitorPoliciesForTenant(tenantId)
+        .stream()
+        .map(MonitorPolicy::getMonitorId)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -190,7 +198,7 @@ public class PolicyManagement {
    */
   private boolean exists(MonitorPolicyCreate policy) {
     return monitorPolicyRepository.existsByScopeAndSubscopeAndName(
-        policy.getPolicyScope(), policy.getSubscope(), policy.getName());
+        policy.getScope(), policy.getSubscope(), policy.getName());
   }
 
   /**
@@ -199,8 +207,36 @@ public class PolicyManagement {
    */
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
     log.info("Sending monitor policy events for {}", policy);
-    List<String> tenantIds;
 
+    List<String> tenantIds = getTenantsForPolicy(policy);
+
+    tenantIds.stream()
+        .map(tenantId -> new MonitorPolicyEvent()
+            .setMonitorId(policy.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId(tenantId))
+        .forEach(policyEventProducer::sendPolicyEvent);
+  }
+
+  public void handlePolicyMonitorUpdate(UUID monitorId) {
+    Optional<MonitorPolicy> policy = monitorPolicyRepository.findByMonitorId(monitorId);
+    if (policy.isEmpty()) {
+      log.warn("Ignoring policy monitor update for monitor={}, monitor not used in policy", monitorId);
+      return;
+    }
+    log.info("Sending policy monitor update events for {}", policy.get());
+
+    List<String> tenantIds = getTenantsForPolicy(policy.get());
+
+    tenantIds.stream()
+        .map(tenantId -> new PolicyMonitorUpdateEvent()
+            .setTenantId(tenantId)
+            .setMonitorId(monitorId))
+        .forEach(policyEventProducer::sendPolicyMonitorUpdateEvent);
+  }
+
+  private List<String> getTenantsForPolicy(Policy policy) {
+    List<String> tenantIds;
     switch(policy.getScope()) {
       case GLOBAL:
         tenantIds = getAllDistinctTenantIds();
@@ -215,12 +251,7 @@ public class PolicyManagement {
         tenantIds = Collections.emptyList();
         break;
     }
-    tenantIds.stream()
-        .map(tenantId -> new MonitorPolicyEvent()
-            .setMonitorId(policy.getMonitorId())
-            .setPolicyId(policy.getId())
-            .setTenantId(tenantId))
-        .forEach(policyEventProducer::sendPolicyEvent);
+    return tenantIds;
   }
 
   /**

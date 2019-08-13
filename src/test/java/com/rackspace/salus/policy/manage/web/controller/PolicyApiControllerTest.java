@@ -132,7 +132,7 @@ public class PolicyApiControllerTest {
 
     // All we need is a valid create object; doesn't matter what else is set.
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
+        .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));

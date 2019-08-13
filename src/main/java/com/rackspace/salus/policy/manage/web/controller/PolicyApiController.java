@@ -73,6 +73,13 @@ public class PolicyApiController {
     return policyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
   }
+  @GetMapping("/admin/policy/monitors/effective/{tenantId}/ids")
+  @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor policy ids retrieved")})
+  @JsonView(View.Admin.class)
+  public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
+    return policyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
+  }
 
   @PostMapping("/admin/policy/monitors")
   @ResponseStatus(HttpStatus.CREATED)

@@ -43,7 +43,7 @@ public class ValidPolicyTest {
   @Test
   public void testValidGlobal() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.GLOBAL)
+        .setScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
@@ -55,7 +55,7 @@ public class ValidPolicyTest {
   @Test
   public void testInvalidGlobal() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.GLOBAL)
+        .setScope(PolicyScope.GLOBAL)
         .setSubscope("Subscope is not allowed for global scoped policies")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
@@ -71,7 +71,7 @@ public class ValidPolicyTest {
   @Test
   public void testValidAccountType() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
+        .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("Subscope is required")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
@@ -84,7 +84,7 @@ public class ValidPolicyTest {
   @Test
   public void testInvalidAccountType() {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
-        .setPolicyScope(PolicyScope.ACCOUNT_TYPE)
+        .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("")
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
