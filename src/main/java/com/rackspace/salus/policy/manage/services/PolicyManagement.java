@@ -40,6 +40,8 @@ import javax.persistence.EntityManager;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -120,6 +122,15 @@ public class PolicyManagement {
         .stream()
         .map(MonitorPolicy::getMonitorId)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Returns all the monitor policies configured.
+   * @param page The slice of results to be returned.
+   * @return A Page of monitor policies.
+   */
+  public Page<MonitorPolicy> getAllMonitorPolicies(Pageable page) {
+    return monitorPolicyRepository.findAll(page);
   }
 
   /**

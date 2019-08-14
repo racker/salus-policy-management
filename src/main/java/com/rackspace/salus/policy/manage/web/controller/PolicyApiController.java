@@ -22,6 +22,7 @@ import com.rackspace.salus.policy.manage.services.PolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.PolicyDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.model.PagedContent;
 import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,12 +75,22 @@ public class PolicyApiController {
     return policyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
   }
+
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/ids")
   @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor policy ids retrieved")})
   @JsonView(View.Admin.class)
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
     return policyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
+  }
+
+  @GetMapping("/admin/policy/monitors")
+  @ApiOperation(value = "Gets all monitor policies")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
+  @JsonView(View.Admin.class)
+  public PagedContent<MonitorPolicyDTO> getAllMonitorPolicies(Pageable page) {
+    return PagedContent.fromPage(policyManagement.getAllMonitorPolicies(page)
+        .map(MonitorPolicyDTO::new));
   }
 
   @PostMapping("/admin/policy/monitors")
