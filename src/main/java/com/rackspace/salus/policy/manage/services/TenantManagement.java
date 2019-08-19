@@ -17,7 +17,7 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.telemetry.messaging.TenantChangeEvent;
+import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.model.NotFoundException;
@@ -109,6 +109,6 @@ public class TenantManagement {
 
   private void sendTenantChangeEvents(String tenantId) {
     policyEventProducer.sendTenantChangeEvent(
-        new TenantChangeEvent().setTenantId(tenantId));
+        new TenantPolicyChangeEvent().setTenantId(tenantId));
   }
 }
