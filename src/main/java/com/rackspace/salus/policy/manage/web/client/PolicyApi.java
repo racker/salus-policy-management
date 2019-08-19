@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.web.model;
+package com.rackspace.salus.policy.manage.web.client;
 
-import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
-import java.io.Serializable;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
+import java.util.List;
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import org.hibernate.validator.constraints.NotBlank;
 
 /**
- * This Object is used for handling the creation of Monitor Policies.
+ * This interface declares a subset of internal REST API calls exposed by the Policy Management
+ * service.
+ *
+ * @see PolicyApiClient
  */
-@Data
-@ValidPolicy
-public class MonitorPolicyCreate implements Serializable {
-  @NotNull
-  PolicyScope scope;
-
-  String subscope;
-
-  @NotBlank
-  String name;
-
-  @NotNull
-  UUID monitorId;
+public interface PolicyApi {
+  List<MonitorPolicyDTO> getEffectiveMonitorPolicies(String tenantId);
+  List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId);
 }

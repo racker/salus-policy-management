@@ -16,17 +16,19 @@
 
 package com.rackspace.salus.policy.manage.services;
 
-import com.rackspace.salus.monitor_management.web.client.MonitorApi;
+import com.rackspace.salus.telemetry.entities.Monitor;
+import com.rackspace.salus.telemetry.messaging.PolicyMonitorUpdateEvent;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
+import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
-import com.rackspace.salus.resource_management.web.client.ResourceApi;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -38,32 +40,34 @@ import javax.persistence.EntityManager;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class PolicyManagement {
 
+  private final ResourceRepository resourceRepository;
+  private final MonitorRepository monitorRepository;
   private final PolicyRepository policyRepository;
   private final MonitorPolicyRepository monitorPolicyRepository;
-  private final MonitorApi monitorApi;
-  private final ResourceApi resourceApi;
   private final PolicyEventProducer policyEventProducer;
   private final TenantManagement tenantManagement;
   private final EntityManager entityManager;
 
   @Autowired
   public PolicyManagement(
+      ResourceRepository resourceRepository,
+      MonitorRepository monitorRepository,
       PolicyRepository policyRepository,
       MonitorPolicyRepository monitorPolicyRepository,
-      MonitorApi monitorApi,
-      ResourceApi resourceApi,
       PolicyEventProducer policyEventProducer,
       TenantManagement tenantManagement, EntityManager entityManager) {
+    this.resourceRepository = resourceRepository;
+    this.monitorRepository = monitorRepository;
     this.policyRepository = policyRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
-    this.monitorApi = monitorApi;
-    this.resourceApi = resourceApi;
     this.policyEventProducer = policyEventProducer;
     this.tenantManagement = tenantManagement;
     this.entityManager = entityManager;
@@ -81,7 +85,7 @@ public class PolicyManagement {
       throws AlreadyExistsException, IllegalArgumentException {
     if (exists(create)) {
       throw new AlreadyExistsException(String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
-          create.getPolicyScope(), create.getSubscope(), create.getName()));
+          create.getScope(), create.getSubscope(), create.getName()));
     }
     if (!isValidMonitorId(create.getMonitorId())) {
       throw new IllegalArgumentException(String.format("Invalid monitor id provided: %s",
@@ -91,7 +95,7 @@ public class PolicyManagement {
         .setMonitorId(create.getMonitorId())
         .setName(create.getName())
         .setSubscope(create.getSubscope())
-        .setScope(create.getPolicyScope());
+        .setScope(create.getScope());
 
     monitorPolicyRepository.save(policy);
     log.info("Stored new policy {}", policy);
@@ -111,6 +115,22 @@ public class PolicyManagement {
 
   public Optional<MonitorPolicy> getMonitorPolicy(UUID id) {
     return monitorPolicyRepository.findById(id);
+  }
+
+  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId) {
+    return getEffectiveMonitorPoliciesForTenant(tenantId)
+        .stream()
+        .map(MonitorPolicy::getMonitorId)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Returns all the monitor policies configured.
+   * @param page The slice of results to be returned.
+   * @return A Page of monitor policies.
+   */
+  public Page<MonitorPolicy> getAllMonitorPolicies(Pageable page) {
+    return monitorPolicyRepository.findAll(page);
   }
 
   /**
@@ -173,12 +193,12 @@ public class PolicyManagement {
   }
 
   /**
-   * Tests whether the monitor exists in the MonitorManagement service.
+   * Tests whether the policy monitor exists in the MonitorManagement service.
    * @param monitorId The monitor to lookup.
    * @return True if the monitor exists, otherwise false.
    */
-  private boolean isValidMonitorId(String monitorId) {
-    return monitorApi.getPolicyMonitorById(monitorId) != null;
+  private boolean isValidMonitorId(UUID monitorId) {
+    return monitorRepository.existsByIdAndTenantId(monitorId, Monitor.POLICY_TENANT);
   }
 
   /**
@@ -189,7 +209,7 @@ public class PolicyManagement {
    */
   private boolean exists(MonitorPolicyCreate policy) {
     return monitorPolicyRepository.existsByScopeAndSubscopeAndName(
-        policy.getPolicyScope(), policy.getSubscope(), policy.getName());
+        policy.getScope(), policy.getSubscope(), policy.getName());
   }
 
   /**
@@ -198,8 +218,36 @@ public class PolicyManagement {
    */
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
     log.info("Sending monitor policy events for {}", policy);
-    List<String> tenantIds;
 
+    List<String> tenantIds = getTenantsForPolicy(policy);
+
+    tenantIds.stream()
+        .map(tenantId -> new MonitorPolicyEvent()
+            .setMonitorId(policy.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId(tenantId))
+        .forEach(policyEventProducer::sendPolicyEvent);
+  }
+
+  public void handlePolicyMonitorUpdate(UUID monitorId) {
+    Optional<MonitorPolicy> policy = monitorPolicyRepository.findByMonitorId(monitorId);
+    if (policy.isEmpty()) {
+      log.warn("Ignoring policy monitor update for monitor={}, monitor not used in policy", monitorId);
+      return;
+    }
+    log.info("Sending policy monitor update events for {}", policy.get());
+
+    List<String> tenantIds = getTenantsForPolicy(policy.get());
+
+    tenantIds.stream()
+        .map(tenantId -> new PolicyMonitorUpdateEvent()
+            .setTenantId(tenantId)
+            .setMonitorId(monitorId))
+        .forEach(policyEventProducer::sendPolicyMonitorUpdateEvent);
+  }
+
+  private List<String> getTenantsForPolicy(Policy policy) {
+    List<String> tenantIds;
     switch(policy.getScope()) {
       case GLOBAL:
         tenantIds = getAllDistinctTenantIds();
@@ -214,20 +262,17 @@ public class PolicyManagement {
         tenantIds = Collections.emptyList();
         break;
     }
-    tenantIds.stream()
-        .map(tenantId -> new MonitorPolicyEvent()
-            .setMonitorId(policy.getMonitorId())
-            .setPolicyId(policy.getId())
-            .setTenantId(tenantId))
-        .forEach(policyEventProducer::sendPolicyEvent);
+    return tenantIds;
   }
 
   /**
-   * Queries the ResourceAPI to retrieve all known tenants with at least one resource.
+   * Gets a list of all tenants that have at least one resource.
    * @return A list of tenant ids.
    */
-  private List<String> getAllDistinctTenantIds() {
-    return resourceApi.getAllDistinctTenantIds();
+  public List<String> getAllDistinctTenantIds() {
+    return entityManager
+        .createNamedQuery("Resource.getAllDistinctTenants", String.class)
+        .getResultList();
   }
 
   private List<String> getTenantsWithAccountType(String accountType) {

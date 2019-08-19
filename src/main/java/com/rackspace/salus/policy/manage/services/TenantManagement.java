@@ -17,23 +17,29 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class TenantManagement {
 
   private final TenantMetadataRepository tenantMetadataRepository;
+  private final PolicyEventProducer policyEventProducer;
 
   @Autowired
   public TenantManagement(
-      TenantMetadataRepository tenantMetadataRepository) {
+      TenantMetadataRepository tenantMetadataRepository,
+      PolicyEventProducer policyEventProducer) {
     this.tenantMetadataRepository = tenantMetadataRepository;
+    this.policyEventProducer = policyEventProducer;
   }
 
   /**
@@ -70,9 +76,11 @@ public class TenantManagement {
 
     TenantMetadata updated;
     if (metadata.isEmpty()) {
+      log.info("Creating tenant metadata for {}", tenantId);
       updated = new TenantMetadata()
         .setTenantId(tenantId);
     } else {
+      log.info("Updating tenant metadata for {}", tenantId);
       updated = metadata.get();
     }
 
@@ -85,6 +93,7 @@ public class TenantManagement {
         .to(updated::setMetadata);
 
     tenantMetadataRepository.save(updated);
+    sendTenantChangeEvents(tenantId);
 
     return updated;
   }
@@ -95,5 +104,11 @@ public class TenantManagement {
             String.format("No metadata found for tenant %s", tenantId)));
 
     tenantMetadataRepository.delete(metadata);
+    sendTenantChangeEvents(tenantId);
+  }
+
+  private void sendTenantChangeEvents(String tenantId) {
+    policyEventProducer.sendTenantChangeEvent(
+        new TenantPolicyChangeEvent().setTenantId(tenantId));
   }
 }

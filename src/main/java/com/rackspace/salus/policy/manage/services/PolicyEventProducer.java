@@ -20,6 +20,8 @@ import static com.rackspace.salus.common.messaging.KafkaMessageKeyBuilder.buildM
 
 import com.rackspace.salus.common.messaging.KafkaTopicProperties;
 import com.rackspace.salus.telemetry.messaging.PolicyEvent;
+import com.rackspace.salus.telemetry.messaging.PolicyMonitorUpdateEvent;
+import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -42,6 +44,20 @@ public class PolicyEventProducer {
     final String topic = properties.getPolicies();
 
     log.debug("Sending policyEvent={} on topic={}", event, topic);
+    kafkaTemplate.send(topic, buildMessageKey(event), event);
+  }
+
+  public void sendPolicyMonitorUpdateEvent(PolicyMonitorUpdateEvent event) {
+    final String topic = properties.getPolicies();
+
+    log.debug("Sending policyMonitorUpdateEvent={} on topic={}", event, topic);
+    kafkaTemplate.send(topic, buildMessageKey(event), event);
+  }
+
+  public void sendTenantChangeEvent(TenantPolicyChangeEvent event) {
+    final String topic = properties.getPolicies();
+
+    log.debug("Sending tenantChangeEvent={} on topic={}", event, topic);
     kafkaTemplate.send(topic, buildMessageKey(event), event);
   }
 }
