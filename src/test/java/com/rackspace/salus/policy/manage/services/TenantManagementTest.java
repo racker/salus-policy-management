@@ -21,9 +21,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.co.jemos.podam.api.PodamFactory;
@@ -53,6 +57,9 @@ public class TenantManagementTest {
   @Autowired
   TenantMetadataRepository tenantMetadataRepository;
 
+  @MockBean
+  PolicyEventProducer policyEventProducer;
+
   private TenantMetadata defaultMetadata;
 
   @Before
@@ -66,6 +73,8 @@ public class TenantManagementTest {
     Optional<TenantMetadata> metadata = tenantManagement.getMetadata(original.getTenantId());
     assertTrue(metadata.isPresent());
     assertThat(metadata.get(), equalTo(original));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
   @Test
@@ -73,12 +82,16 @@ public class TenantManagementTest {
     String accountType = tenantManagement.getAccountTypeByTenant(defaultMetadata.getTenantId());
     assertThat(accountType, notNullValue());
     assertThat(accountType, equalTo(defaultMetadata.getAccountType()));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
   @Test
   public void testGetAccountTypeByTenant_accountDoesntExist() {
     String accountType = tenantManagement.getAccountTypeByTenant(RandomStringUtils.randomAlphabetic(10));
     assertThat(accountType, nullValue());
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
   @Test
@@ -92,6 +105,12 @@ public class TenantManagementTest {
     assertThat(metadata.getTenantId(), equalTo(tenantId));
     assertThat(metadata.getAccountType(), equalTo(create.getAccountType()));
     assertThat(metadata.getMetadata(), equalTo(create.getMetadata()));
+
+    verify(policyEventProducer).sendTenantChangeEvent(
+        new TenantPolicyChangeEvent()
+            .setTenantId(tenantId));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
   @Test
@@ -111,6 +130,12 @@ public class TenantManagementTest {
     assertThat(metadata.getTenantId(), equalTo(original.getTenantId()));
     assertThat(metadata.getAccountType(), equalTo(update.getAccountType()));
     assertThat(metadata.getMetadata(), equalTo(update.getMetadata()));
+
+    verify(policyEventProducer).sendTenantChangeEvent(
+        new TenantPolicyChangeEvent()
+            .setTenantId(original.getTenantId()));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
   @Test
@@ -119,6 +144,12 @@ public class TenantManagementTest {
     tenantManagement.removeTenantMetadata(original.getTenantId());
     Optional<TenantMetadata> metadata = tenantManagement.getMetadata(original.getTenantId());
     assertTrue(metadata.isEmpty());
+
+    verify(policyEventProducer).sendTenantChangeEvent(
+        new TenantPolicyChangeEvent()
+            .setTenantId(original.getTenantId()));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 
 }
