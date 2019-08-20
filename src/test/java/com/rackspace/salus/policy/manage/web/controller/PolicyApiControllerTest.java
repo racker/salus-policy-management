@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.policy.manage.services.PolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import java.time.Instant;
@@ -149,6 +149,17 @@ public class PolicyApiControllerTest {
             readContent("PolicyApiControllerTest/global_policy.json"), true));
 
     verify(policyManagement).createMonitorPolicy(policyCreate);
+    verifyNoMoreInteractions(policyManagement);
+  }
+
+  @Test
+  public void testUpdatePolicy() throws Exception {
+    mvc.perform(put(
+        "/api/admin/policy/monitors/{uuid}", UUID.randomUUID())
+        .content("test")
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isMethodNotAllowed());
+
     verifyNoMoreInteractions(policyManagement);
   }
 
