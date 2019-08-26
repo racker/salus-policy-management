@@ -23,12 +23,10 @@ import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
-import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
-import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -46,27 +44,21 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class PolicyManagement {
+public class MonitorPolicyManagement {
 
-  private final ResourceRepository resourceRepository;
   private final MonitorRepository monitorRepository;
-  private final PolicyRepository policyRepository;
   private final MonitorPolicyRepository monitorPolicyRepository;
   private final PolicyEventProducer policyEventProducer;
   private final TenantManagement tenantManagement;
   private final EntityManager entityManager;
 
   @Autowired
-  public PolicyManagement(
-      ResourceRepository resourceRepository,
+  public MonitorPolicyManagement(
       MonitorRepository monitorRepository,
-      PolicyRepository policyRepository,
       MonitorPolicyRepository monitorPolicyRepository,
       PolicyEventProducer policyEventProducer,
       TenantManagement tenantManagement, EntityManager entityManager) {
-    this.resourceRepository = resourceRepository;
     this.monitorRepository = monitorRepository;
-    this.policyRepository = policyRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
     this.policyEventProducer = policyEventProducer;
     this.tenantManagement = tenantManagement;
@@ -109,8 +101,8 @@ public class PolicyManagement {
    * @param id The id of the policy to retrieve.
    * @return The full policy details.
    */
-  public Optional<Policy> getPolicy(UUID id) {
-    return policyRepository.findById(id);
+  public Optional<MonitorPolicy> getPolicy(UUID id) {
+    return monitorPolicyRepository.findById(id);
   }
 
   public Optional<MonitorPolicy> getMonitorPolicy(UUID id) {
@@ -187,7 +179,7 @@ public class PolicyManagement {
         new NotFoundException(
             String.format("No policy found with id %s", id)));
 
-    policyRepository.deleteById(id);
+    monitorPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMonitorPolicyEvents(policy);
   }

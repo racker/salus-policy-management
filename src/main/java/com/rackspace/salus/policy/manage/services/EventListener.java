@@ -30,13 +30,13 @@ import org.springframework.stereotype.Service;
 public class EventListener {
 
   private final KafkaTopicProperties properties;
-  private final PolicyManagement policyManagement;
+  private final MonitorPolicyManagement monitorPolicyManagement;
   private final String topic;
 
   @Autowired
-  public EventListener(KafkaTopicProperties properties, PolicyManagement policyManagement) {
+  public EventListener(KafkaTopicProperties properties, MonitorPolicyManagement monitorPolicyManagement) {
     this.properties = properties;
-    this.policyManagement = policyManagement;
+    this.monitorPolicyManagement = monitorPolicyManagement;
     this.topic = this.properties.getPolicies();
   }
 
@@ -52,7 +52,7 @@ public class EventListener {
   public void consumePolicyMonitorUpdateEvents(PolicyMonitorUpdateEvent updateEvent) {
     // Ignore non-null tenant events.  These will be handled by monitor management.
     if (updateEvent.getTenantId() == null) {
-      policyManagement.handlePolicyMonitorUpdate(updateEvent.getMonitorId());
+      monitorPolicyManagement.handlePolicyMonitorUpdate(updateEvent.getMonitorId());
     }
   }
 

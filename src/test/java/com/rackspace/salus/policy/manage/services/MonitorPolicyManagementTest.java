@@ -53,7 +53,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.persistence.EntityManager;
-import javax.persistence.FlushModeType;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,8 +69,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({PolicyManagement.class, TenantManagement.class, DatabaseConfig.class})
-public class PolicyManagementTest {
+@Import({MonitorPolicyManagement.class, TenantManagement.class, DatabaseConfig.class})
+public class MonitorPolicyManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
 
@@ -82,7 +81,7 @@ public class PolicyManagementTest {
   PolicyEventProducer policyEventProducer;
 
   @Autowired
-  PolicyManagement policyManagement;
+  MonitorPolicyManagement monitorPolicyManagement;
 
   @Autowired
   TenantManagement tenantManagement;
@@ -120,7 +119,7 @@ public class PolicyManagementTest {
 
   @Test
   public void testGetMonitorPolicy() {
-    Optional<MonitorPolicy> p = policyManagement.getMonitorPolicy(defaultMonitorPolicy.getId());
+    Optional<MonitorPolicy> p = monitorPolicyManagement.getMonitorPolicy(defaultMonitorPolicy.getId());
 
     assertTrue(p.isPresent());
     MonitorPolicy mp = p.get();
@@ -151,7 +150,7 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
 
-    MonitorPolicy policy = policyManagement.createMonitorPolicy(policyCreate);
+    MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
@@ -180,7 +179,7 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
 
-    MonitorPolicy policy = policyManagement.createMonitorPolicy(policyCreate);
+    MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
@@ -208,7 +207,7 @@ public class PolicyManagementTest {
         .setName(defaultMonitorPolicy.getName())
         .setMonitorId(UUID.randomUUID());
 
-    assertThatThrownBy(() -> policyManagement.createMonitorPolicy(policyCreate))
+    assertThatThrownBy(() -> monitorPolicyManagement.createMonitorPolicy(policyCreate))
       .isInstanceOf(AlreadyExistsException.class)
       .hasMessage(
           String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
@@ -224,7 +223,7 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(UUID.randomUUID());
 
-    assertThatThrownBy(() -> policyManagement.createMonitorPolicy(policyCreate))
+    assertThatThrownBy(() -> monitorPolicyManagement.createMonitorPolicy(policyCreate))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             String.format("Invalid monitor id provided: %s",
@@ -256,7 +255,7 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setMonitorId(monitor.getId());
 
-    Policy policy = policyManagement.createMonitorPolicy(policyCreate);
+    Policy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
     // Verify the Policy Event looks correct
@@ -268,7 +267,8 @@ public class PolicyManagementTest {
     ));
 
     // Verify the monitor in the PolicyEvent can be found
-    Optional<MonitorPolicy> saved = policyManagement.getMonitorPolicy(policyEventArg.getValue().getPolicyId());
+    Optional<MonitorPolicy> saved = monitorPolicyManagement
+        .getMonitorPolicy(policyEventArg.getValue().getPolicyId());
     assertTrue(saved.isPresent());
 
     MonitorPolicy p = saved.get();
@@ -366,7 +366,7 @@ public class PolicyManagementTest {
             .setScope(PolicyScope.TENANT)
     );
 
-    List<MonitorPolicy> effectivePolicies = policyManagement.getEffectiveMonitorPoliciesForTenant(tenantId);
+    List<MonitorPolicy> effectivePolicies = monitorPolicyManagement.getEffectiveMonitorPoliciesForTenant(tenantId);
 
     assertThat(effectivePolicies, hasSize(5));
     assertThat(effectivePolicies, containsInAnyOrder(expected.toArray()));
@@ -382,7 +382,7 @@ public class PolicyManagementTest {
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setScope(PolicyScope.GLOBAL));
 
-    policyManagement.removeMonitorPolicy(saved.getId());
+    monitorPolicyManagement.removeMonitorPolicy(saved.getId());
 
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
@@ -393,14 +393,16 @@ public class PolicyManagementTest {
             .setTenantId(tenantId)
     ));
 
-    Optional<Policy> removed = policyManagement.getPolicy(policyEventArg.getValue().getPolicyId());
+    Optional<MonitorPolicy> removed = monitorPolicyManagement.getMonitorPolicy(
+        policyEventArg.getValue().getPolicyId());
+
     assertTrue(removed.isEmpty());
   }
 
   @Test
   public void testRemoveMonitorPolicy_doesntExist() {
     UUID id = UUID.randomUUID();
-    assertThatThrownBy(() -> policyManagement.removeMonitorPolicy(id))
+    assertThatThrownBy(() -> monitorPolicyManagement.removeMonitorPolicy(id))
         .isInstanceOf(NotFoundException.class)
         .hasMessage(
             String.format("No policy found with id %s", id)
@@ -414,7 +416,7 @@ public class PolicyManagementTest {
 
     List<String> expectedIds = resources.stream().map(Resource::getTenantId).collect(Collectors.toList());
 
-    List<String> tenantIds = policyManagement.getAllDistinctTenantIds();
+    List<String> tenantIds = monitorPolicyManagement.getAllDistinctTenantIds();
 
     assertThat(tenantIds, notNullValue());
     assertThat(tenantIds, hasSize(expectedIds.size()));
