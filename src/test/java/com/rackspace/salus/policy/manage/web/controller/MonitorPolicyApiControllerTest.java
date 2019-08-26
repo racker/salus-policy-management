@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import com.rackspace.salus.policy.manage.services.PolicyManagement;
+import com.rackspace.salus.policy.manage.services.MonitorPolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,8 +53,8 @@ import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(PolicyApiController.class)
-public class PolicyApiControllerTest {
+@WebMvcTest(MonitorPolicyApiController.class)
+public class MonitorPolicyApiControllerTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
 
@@ -65,7 +65,7 @@ public class PolicyApiControllerTest {
   ObjectMapper objectMapper;
 
   @MockBean
-  PolicyManagement policyManagement;
+  MonitorPolicyManagement monitorPolicyManagement;
 
   // A timestamp to be used in tests that translates to "1970-01-02T03:46:40Z"
   private static final Instant DEFAULT_TIMESTAMP = Instant.ofEpochSecond(100000);
@@ -80,7 +80,7 @@ public class PolicyApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(policyManagement.getMonitorPolicy(any()))
+    when(monitorPolicyManagement.getMonitorPolicy(any()))
         .thenReturn(Optional.of(policy));
 
     mvc.perform(get(
@@ -93,15 +93,15 @@ public class PolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_policy.json"), true));
 
-    verify(policyManagement).getMonitorPolicy(policy.getId());
-    verifyNoMoreInteractions(policyManagement);
+    verify(monitorPolicyManagement).getMonitorPolicy(policy.getId());
+    verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
   @Test
   public void testGetEffectivePoliciesByTenantId() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     final List<MonitorPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorPolicy.class);
-    when(policyManagement.getEffectiveMonitorPoliciesForTenant(anyString()))
+    when(monitorPolicyManagement.getEffectiveMonitorPoliciesForTenant(anyString()))
         .thenReturn(listOfPolicies);
 
     mvc.perform(get(
@@ -113,8 +113,8 @@ public class PolicyApiControllerTest {
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicies)));
 
-    verify(policyManagement).getEffectiveMonitorPoliciesForTenant(tenantId);
-    verifyNoMoreInteractions(policyManagement);
+    verify(monitorPolicyManagement).getEffectiveMonitorPoliciesForTenant(tenantId);
+    verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
   @Test
@@ -127,7 +127,7 @@ public class PolicyApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(policyManagement.createMonitorPolicy(any()))
+    when(monitorPolicyManagement.createMonitorPolicy(any()))
         .thenReturn(policy);
 
     // All we need is a valid create object; doesn't matter what else is set.
@@ -148,8 +148,8 @@ public class PolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_policy.json"), true));
 
-    verify(policyManagement).createMonitorPolicy(policyCreate);
-    verifyNoMoreInteractions(policyManagement);
+    verify(monitorPolicyManagement).createMonitorPolicy(policyCreate);
+    verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
   @Test
@@ -160,7 +160,7 @@ public class PolicyApiControllerTest {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isMethodNotAllowed());
 
-    verifyNoMoreInteractions(policyManagement);
+    verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
   @Test
@@ -172,8 +172,8 @@ public class PolicyApiControllerTest {
         .andDo(print())
         .andExpect(status().isNoContent());
 
-    verify(policyManagement).removeMonitorPolicy(id);
-    verifyNoMoreInteractions(policyManagement);
+    verify(monitorPolicyManagement).removeMonitorPolicy(id);
+    verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
 

@@ -18,9 +18,8 @@ package com.rackspace.salus.policy.manage.web.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
-import com.rackspace.salus.policy.manage.services.PolicyManagement;
+import com.rackspace.salus.policy.manage.services.MonitorPolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
-import com.rackspace.salus.policy.manage.web.model.PolicyDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
 import com.rackspace.salus.telemetry.model.View;
@@ -47,14 +46,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/api")
-public class PolicyApiController {
+public class MonitorPolicyApiController {
 
-  private PolicyManagement policyManagement;
+  private MonitorPolicyManagement monitorPolicyManagement;
 
   @Autowired
-  public PolicyApiController(
-      PolicyManagement policyManagement) {
-    this.policyManagement = policyManagement;
+  public MonitorPolicyApiController(
+      MonitorPolicyManagement monitorPolicyManagement) {
+    this.monitorPolicyManagement = monitorPolicyManagement;
   }
 
   @GetMapping("/admin/policy/monitors/{uuid}")
@@ -63,7 +62,7 @@ public class PolicyApiController {
   @JsonView(View.Admin.class)
   public MonitorPolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
     return new MonitorPolicyDTO(
-        policyManagement.getMonitorPolicy(uuid).orElseThrow(
+        monitorPolicyManagement.getMonitorPolicy(uuid).orElseThrow(
             () -> new NotFoundException(String.format("No policy found with id %s", uuid))));
   }
 
@@ -71,8 +70,8 @@ public class PolicyApiController {
   @ApiOperation(value = "Gets effective monitor policies by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
   @JsonView(View.Admin.class)
-  public List<PolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
-    return policyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
+  public List<MonitorPolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
+    return monitorPolicyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
   }
 
@@ -81,7 +80,7 @@ public class PolicyApiController {
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor policy ids retrieved")})
   @JsonView(View.Admin.class)
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
-    return policyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
+    return monitorPolicyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
   }
 
   @GetMapping("/admin/policy/monitors")
@@ -89,7 +88,7 @@ public class PolicyApiController {
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
   @JsonView(View.Admin.class)
   public PagedContent<MonitorPolicyDTO> getAllMonitorPolicies(Pageable page) {
-    return PagedContent.fromPage(policyManagement.getAllMonitorPolicies(page)
+    return PagedContent.fromPage(monitorPolicyManagement.getAllMonitorPolicies(page)
         .map(MonitorPolicyDTO::new));
   }
 
@@ -100,7 +99,7 @@ public class PolicyApiController {
   @JsonView(View.Admin.class)
   public MonitorPolicyDTO create(@Valid @RequestBody final MonitorPolicyCreate input)
       throws IllegalArgumentException {
-    return new MonitorPolicyDTO(policyManagement.createMonitorPolicy(input));
+    return new MonitorPolicyDTO(monitorPolicyManagement.createMonitorPolicy(input));
   }
 
   @DeleteMapping("/admin/policy/monitors/{uuid}")
@@ -109,6 +108,6 @@ public class PolicyApiController {
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Monitor Policy Deleted")})
   @JsonView(View.Admin.class)
   public void delete(@PathVariable UUID uuid) {
-    policyManagement.removeMonitorPolicy(uuid);
+    monitorPolicyManagement.removeMonitorPolicy(uuid);
   }
 }
