@@ -81,6 +81,9 @@ public class MonitorPolicyManagementTest {
   PolicyEventProducer policyEventProducer;
 
   @Autowired
+  PolicyManagement policyManagement;
+
+  @Autowired
   MonitorPolicyManagement monitorPolicyManagement;
 
   @Autowired
@@ -416,7 +419,7 @@ public class MonitorPolicyManagementTest {
 
     List<String> expectedIds = resources.stream().map(Resource::getTenantId).collect(Collectors.toList());
 
-    List<String> tenantIds = monitorPolicyManagement.getAllDistinctTenantIds();
+    List<String> tenantIds = policyManagement.getAllDistinctTenantIds();
 
     assertThat(tenantIds, notNullValue());
     assertThat(tenantIds, hasSize(expectedIds.size()));

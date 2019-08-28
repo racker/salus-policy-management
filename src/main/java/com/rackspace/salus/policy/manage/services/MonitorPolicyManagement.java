@@ -18,23 +18,19 @@ package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.messaging.PolicyMonitorUpdateEvent;
-import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.persistence.EntityManager;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,20 +45,19 @@ public class MonitorPolicyManagement {
   private final MonitorRepository monitorRepository;
   private final MonitorPolicyRepository monitorPolicyRepository;
   private final PolicyEventProducer policyEventProducer;
-  private final TenantManagement tenantManagement;
-  private final EntityManager entityManager;
+  private final PolicyManagement policyManagement;
 
   @Autowired
   public MonitorPolicyManagement(
       MonitorRepository monitorRepository,
       MonitorPolicyRepository monitorPolicyRepository,
       PolicyEventProducer policyEventProducer,
-      TenantManagement tenantManagement, EntityManager entityManager) {
+      TenantManagement tenantManagement,
+      PolicyManagement policyManagement) {
     this.monitorRepository = monitorRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
     this.policyEventProducer = policyEventProducer;
-    this.tenantManagement = tenantManagement;
-    this.entityManager = entityManager;
+    this.policyManagement = policyManagement;
   }
 
   /**
@@ -101,10 +96,6 @@ public class MonitorPolicyManagement {
    * @param id The id of the policy to retrieve.
    * @return The full policy details.
    */
-  public Optional<MonitorPolicy> getPolicy(UUID id) {
-    return monitorPolicyRepository.findById(id);
-  }
-
   public Optional<MonitorPolicy> getMonitorPolicy(UUID id) {
     return monitorPolicyRepository.findById(id);
   }
@@ -139,7 +130,7 @@ public class MonitorPolicyManagement {
         // Create a stream from all monitor policies
         StreamSupport.stream(monitorPolicyRepository.findAll().spliterator(), false)
             // Filter the stream for only those policies relevant to this tenant
-            .filter(policy -> isPolicyApplicable(policy, tenantId))
+            .filter(policy -> policyManagement.isPolicyApplicable(policy, tenantId))
             // Get one policy for each policy name
             .collect(
                 // First group the policies by name
@@ -153,21 +144,6 @@ public class MonitorPolicyManagement {
             .filter(Optional::isPresent).map(Optional::get)
             // Finally convert to a list of the relevant monitor policies
             .collect(Collectors.toList());
-  }
-
-  /**
-   * Determines whether the given policy is relevant to the tenant.
-   *
-   * @param policy The policy to evaluate.
-   * @param tenantId The tenant to evaluate.
-   * @return True if the policy is relevant, even if it is currently overridden. False otherwise.
-   */
-  private boolean isPolicyApplicable(Policy policy, String tenantId) {
-    String accountType = tenantManagement.getAccountTypeByTenant(tenantId);
-
-    return policy.getScope().equals(PolicyScope.GLOBAL) ||
-        (policy.getScope().equals(PolicyScope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
-        (policy.getScope().equals(PolicyScope.TENANT) && policy.getSubscope().equals(tenantId));
   }
 
   /**
@@ -211,7 +187,7 @@ public class MonitorPolicyManagement {
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
     log.info("Sending monitor policy events for {}", policy);
 
-    List<String> tenantIds = getTenantsForPolicy(policy);
+    List<String> tenantIds = policyManagement.getTenantsForPolicy(policy);
 
     tenantIds.stream()
         .map(tenantId -> new MonitorPolicyEvent()
@@ -221,7 +197,7 @@ public class MonitorPolicyManagement {
         .forEach(policyEventProducer::sendPolicyEvent);
   }
 
-  public void handlePolicyMonitorUpdate(UUID monitorId) {
+  void handlePolicyMonitorUpdate(UUID monitorId) {
     Optional<MonitorPolicy> policy = monitorPolicyRepository.findByMonitorId(monitorId);
     if (policy.isEmpty()) {
       log.warn("Ignoring policy monitor update for monitor={}, monitor not used in policy", monitorId);
@@ -229,48 +205,12 @@ public class MonitorPolicyManagement {
     }
     log.info("Sending policy monitor update events for {}", policy.get());
 
-    List<String> tenantIds = getTenantsForPolicy(policy.get());
+    List<String> tenantIds = policyManagement.getTenantsForPolicy(policy.get());
 
     tenantIds.stream()
         .map(tenantId -> new PolicyMonitorUpdateEvent()
             .setTenantId(tenantId)
             .setMonitorId(monitorId))
         .forEach(policyEventProducer::sendPolicyMonitorUpdateEvent);
-  }
-
-  private List<String> getTenantsForPolicy(Policy policy) {
-    List<String> tenantIds;
-    switch(policy.getScope()) {
-      case GLOBAL:
-        tenantIds = getAllDistinctTenantIds();
-        break;
-      case ACCOUNT_TYPE:
-        tenantIds = getTenantsWithAccountType(policy.getSubscope());
-        break;
-      case TENANT:
-        tenantIds = Collections.singletonList(policy.getSubscope());
-        break;
-      default:
-        tenantIds = Collections.emptyList();
-        break;
-    }
-    return tenantIds;
-  }
-
-  /**
-   * Gets a list of all tenants that have at least one resource.
-   * @return A list of tenant ids.
-   */
-  public List<String> getAllDistinctTenantIds() {
-    return entityManager
-        .createNamedQuery("Resource.getAllDistinctTenants", String.class)
-        .getResultList();
-  }
-
-  private List<String> getTenantsWithAccountType(String accountType) {
-    return entityManager
-        .createNamedQuery("TenantMetadata.getByAccountType", String.class)
-        .setParameter("accountType", accountType)
-        .getResultList();
   }
 }
