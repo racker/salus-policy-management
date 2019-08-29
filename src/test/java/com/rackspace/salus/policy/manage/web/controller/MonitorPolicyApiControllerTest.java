@@ -67,9 +67,6 @@ public class MonitorPolicyApiControllerTest {
   @MockBean
   MonitorPolicyManagement monitorPolicyManagement;
 
-  // A timestamp to be used in tests that translates to "1970-01-02T03:46:40Z"
-  private static final Instant DEFAULT_TIMESTAMP = Instant.ofEpochSecond(100000);
-
   @Test
   public void testGetById() throws Exception {
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
@@ -77,8 +74,8 @@ public class MonitorPolicyApiControllerTest {
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
-        .setCreatedTimestamp(DEFAULT_TIMESTAMP)
-        .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
+        .setCreatedTimestamp(Instant.EPOCH)
+        .setUpdatedTimestamp(Instant.EPOCH);
 
     when(monitorPolicyManagement.getMonitorPolicy(any()))
         .thenReturn(Optional.of(policy));
@@ -91,7 +88,7 @@ public class MonitorPolicyApiControllerTest {
         .andExpect(content()
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(content().json(
-            readContent("PolicyApiControllerTest/global_policy.json"), true));
+            readContent("PolicyApiControllerTest/global_monitor_policy.json"), true));
 
     verify(monitorPolicyManagement).getMonitorPolicy(policy.getId());
     verifyNoMoreInteractions(monitorPolicyManagement);
@@ -124,8 +121,8 @@ public class MonitorPolicyApiControllerTest {
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
-        .setCreatedTimestamp(DEFAULT_TIMESTAMP)
-        .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
+        .setCreatedTimestamp(Instant.EPOCH)
+        .setUpdatedTimestamp(Instant.EPOCH);
 
     when(monitorPolicyManagement.createMonitorPolicy(any()))
         .thenReturn(policy);
@@ -146,7 +143,7 @@ public class MonitorPolicyApiControllerTest {
         .andExpect(content()
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(content().json(
-            readContent("PolicyApiControllerTest/global_policy.json"), true));
+            readContent("PolicyApiControllerTest/global_monitor_policy.json"), true));
 
     verify(monitorPolicyManagement).createMonitorPolicy(policyCreate);
     verifyNoMoreInteractions(monitorPolicyManagement);
@@ -175,6 +172,4 @@ public class MonitorPolicyApiControllerTest {
     verify(monitorPolicyManagement).removeMonitorPolicy(id);
     verifyNoMoreInteractions(monitorPolicyManagement);
   }
-
-
 }

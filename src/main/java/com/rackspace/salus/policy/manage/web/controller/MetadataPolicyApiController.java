@@ -96,7 +96,7 @@ public class MetadataPolicyApiController {
     return new MetadataPolicyDTO(metadataPolicyManagement.createMetadataPolicy(input));
   }
 
-  @PutMapping("/admin/policy/metadata")
+  @PutMapping("/admin/policy/metadata/{uuid}")
   @ApiOperation(value = "Creates new Metadata Policy")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully Created Metadata Policy")})
   @JsonView(View.Admin.class)

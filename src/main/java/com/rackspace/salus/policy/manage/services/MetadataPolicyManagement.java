@@ -227,10 +227,5 @@ public class MetadataPolicyManagement {
           .filter(tenantsInPolicyType::contains)
           .collect(Collectors.toList());
     }
-
-    // Does this logic also handle updating bound policy monitors???
-
-    //testCreateMetadataPolicy update this test to have a monitor stored already.
-    // or mock the monitor sql response
   }
 }

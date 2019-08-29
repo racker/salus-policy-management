@@ -1,0 +1,11 @@
+{
+  "id": "5cb19cb3-03e3-4a71-8051-cc7c4bc0c029",
+  "scope": "GLOBAL",
+  "subscope": null,
+  "monitorType": "ping",
+  "valueType": "STRING",
+  "key": "test_key",
+  "value": "test_value",
+  "createdTimestamp": "1970-01-01T00:00:00Z",
+  "updatedTimestamp": "1970-01-01T00:00:00Z"
+}
