@@ -40,21 +40,21 @@ public class PolicyEventProducer {
     this.properties= properties;
   }
 
-  public void sendPolicyEvent(PolicyEvent event) {
+  void sendPolicyEvent(PolicyEvent event) {
     final String topic = properties.getPolicies();
 
     log.debug("Sending policyEvent={} on topic={}", event, topic);
     kafkaTemplate.send(topic, buildMessageKey(event), event);
   }
 
-  public void sendPolicyMonitorUpdateEvent(PolicyMonitorUpdateEvent event) {
+  void sendPolicyMonitorUpdateEvent(PolicyMonitorUpdateEvent event) {
     final String topic = properties.getPolicies();
 
     log.debug("Sending policyMonitorUpdateEvent={} on topic={}", event, topic);
     kafkaTemplate.send(topic, buildMessageKey(event), event);
   }
 
-  public void sendTenantChangeEvent(TenantPolicyChangeEvent event) {
+  void sendTenantChangeEvent(TenantPolicyChangeEvent event) {
     final String topic = properties.getPolicies();
 
     log.debug("Sending tenantChangeEvent={} on topic={}", event, topic);

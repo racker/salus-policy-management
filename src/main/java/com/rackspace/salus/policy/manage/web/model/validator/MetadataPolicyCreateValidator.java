@@ -16,16 +16,16 @@
 
 package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCU;
+import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 
-public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCU> {
+public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {
   @Override
-  protected Enum getScope(MetadataPolicyCU policy) {
+  protected Enum getScope(MetadataPolicyCreate policy) {
     return policy.getScope();
   }
 
   @Override
-  protected boolean isSubscopeSet(MetadataPolicyCU policy) {
+  protected boolean isSubscopeSet(MetadataPolicyCreate policy) {
     return policy.getSubscope() != null && !policy.getSubscope().isBlank();
   }
 }

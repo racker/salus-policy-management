@@ -18,7 +18,6 @@ package com.rackspace.salus.policy.manage.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 
 @ConfigurationProperties("salus.services")

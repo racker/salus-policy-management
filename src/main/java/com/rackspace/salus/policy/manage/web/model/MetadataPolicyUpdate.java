@@ -16,30 +16,15 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
-import com.rackspace.salus.telemetry.model.MonitorType;
-import com.rackspace.salus.telemetry.model.PolicyScope;
 import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-@ValidPolicy
-public class MetadataPolicyCU implements Serializable {
-
-  @NotNull
-  PolicyScope scope;
-
-  String subscope;
-
-  MonitorType monitorType;
+public class MetadataPolicyUpdate implements Serializable {
 
   MetadataValueType valueType;
-
-  @NotBlank
-  String key;
 
   @NotBlank
   String value;
