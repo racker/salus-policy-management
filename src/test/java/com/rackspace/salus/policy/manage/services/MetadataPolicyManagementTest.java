@@ -295,8 +295,7 @@ public class MetadataPolicyManagementTest {
         .setAccountType(accountType)
         .setTenantId(tenantId)
         .setMetadata(Collections.emptyMap()));
-
-    // Create a monitor
+    
     MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
