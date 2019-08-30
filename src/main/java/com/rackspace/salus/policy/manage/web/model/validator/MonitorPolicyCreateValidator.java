@@ -17,10 +17,11 @@
 package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
+import com.rackspace.salus.telemetry.model.PolicyScope;
 
 public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
   @Override
-  protected Enum getScope(MonitorPolicyCreate policy) {
+  protected PolicyScope getScope(MonitorPolicyCreate policy) {
     return policy.getScope();
   }
 

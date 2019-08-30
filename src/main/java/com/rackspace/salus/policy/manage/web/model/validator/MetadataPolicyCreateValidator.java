@@ -17,10 +17,11 @@
 package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
+import com.rackspace.salus.telemetry.model.PolicyScope;
 
 public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {
   @Override
-  protected Enum getScope(MetadataPolicyCreate policy) {
+  protected PolicyScope getScope(MetadataPolicyCreate policy) {
     return policy.getScope();
   }
 

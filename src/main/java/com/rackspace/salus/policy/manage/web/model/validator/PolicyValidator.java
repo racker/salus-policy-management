@@ -33,6 +33,6 @@ public abstract class PolicyValidator<T> implements ConstraintValidator<ValidPol
             (!getScope(value).equals(PolicyScope.GLOBAL) && isSubscopeSet(value));
   }
 
-  protected abstract Enum getScope(T value);
+  protected abstract PolicyScope getScope(T value);
   protected abstract boolean isSubscopeSet(T value);
 }
