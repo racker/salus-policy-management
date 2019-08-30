@@ -201,7 +201,7 @@ public class MetadataPolicyManagement {
   }
 
   /**
-   * Send events for all accounts that the policy may be relevant for.
+   * Get events for all accounts that the policy may be relevant for.
    *
    * In the end, the consumer of these events will ultimately be responsible for determining
    * if the field is relevant or not.
