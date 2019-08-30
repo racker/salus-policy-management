@@ -69,7 +69,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({MonitorPolicyManagement.class, TenantManagement.class, DatabaseConfig.class})
+@Import({PolicyManagement.class, MonitorPolicyManagement.class,
+    TenantManagement.class, DatabaseConfig.class})
 public class MonitorPolicyManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
