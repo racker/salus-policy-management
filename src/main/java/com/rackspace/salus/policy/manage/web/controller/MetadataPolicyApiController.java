@@ -21,6 +21,8 @@ import com.rackspace.salus.policy.manage.services.MetadataPolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
+import com.rackspace.salus.telemetry.entities.Monitor;
+import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
 import com.rackspace.salus.telemetry.model.View;
@@ -28,6 +30,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -75,6 +78,14 @@ public class MetadataPolicyApiController {
   public List<MetadataPolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
     return metadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(tenantId)
         .stream().map(MetadataPolicyDTO::new).collect(Collectors.toList());
+  }
+
+  @GetMapping("/admin/policy/metadata/effective/{tenantId}/{monitorType}")
+  @ApiOperation(value = "Gets effective Metadata policy key/values by tenant id")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Policy values Retrieved")})
+  @JsonView(View.Admin.class)
+  public Map<String, String> getPolicyMap(@PathVariable String tenantId, @PathVariable MonitorType monitorType) {
+    return metadataPolicyManagement.getMetadataPoliciesForTenantAndType(tenantId, monitorType);
   }
 
   @GetMapping("/admin/policy/metadata")

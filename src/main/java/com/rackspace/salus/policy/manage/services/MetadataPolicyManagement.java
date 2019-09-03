@@ -21,11 +21,15 @@ import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MetadataPolicyEvent;
+import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.repositories.MetadataPolicyRepository;
+import java.util.AbstractMap;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -187,6 +191,22 @@ public class MetadataPolicyManagement {
             .filter(Optional::isPresent).map(Optional::get)
             // Finally convert to a list of the relevant metadata policies
             .collect(Collectors.toList());
+  }
+
+  public Map<String, String> getMetadataPoliciesForTenantAndType(String tenantId, MonitorType monitorType) {
+    List<MetadataPolicy> listOfPolicies = getEffectiveMetadataPoliciesForTenant(tenantId);
+
+    Map<String, String> policyValuesMap = new HashMap<>();
+    for (MetadataPolicy policy : listOfPolicies) {
+      if (policy.getMonitorType() == null) {
+        // Add any generic monitor policy if it does not already have a specific monitor type value set.
+        policyValuesMap.putIfAbsent(MetadataPolicy.PREFIX + policy.getKey(), policy.getValue());
+      } else if (policy.getMonitorType().equals(monitorType)) {
+        // Add any policy for the given monitor type.  Override the previously set generic policy if one was already added.
+        policyValuesMap.put(MetadataPolicy.PREFIX + policy.getKey(), policy.getValue());
+      }
+    }
+    return policyValuesMap;
   }
 
   /**
