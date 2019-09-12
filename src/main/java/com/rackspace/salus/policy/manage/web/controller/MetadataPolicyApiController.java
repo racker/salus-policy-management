@@ -17,20 +17,21 @@
 package com.rackspace.salus.policy.manage.web.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.policy.manage.services.MetadataPolicyManagement;
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.services.MonitorMetadataPolicyManagement;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
-import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -53,75 +54,82 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class MetadataPolicyApiController {
 
-  private MetadataPolicyManagement metadataPolicyManagement;
+  private final MonitorMetadataPolicyManagement monitorMetadataPolicyManagement;
 
   @Autowired
   public MetadataPolicyApiController(
-      MetadataPolicyManagement metadataPolicyManagement) {
-    this.metadataPolicyManagement = metadataPolicyManagement;
+      MonitorMetadataPolicyManagement monitorMetadataPolicyManagement) {
+    this.monitorMetadataPolicyManagement = monitorMetadataPolicyManagement;
   }
 
-  @GetMapping("/admin/policy/metadata/{uuid}")
+  @GetMapping("/admin/policy/metadata/monitor/{uuid}")
   @ApiOperation(value = "Gets specific Metadata Policy by id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Metadata Policy Retrieved")})
   @JsonView(View.Admin.class)
-  public MetadataPolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
-    return new MetadataPolicyDTO(
-        metadataPolicyManagement.getMetadataPolicy(uuid).orElseThrow(
+  public MonitorMetadataPolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
+    return new MonitorMetadataPolicyDTO(
+        monitorMetadataPolicyManagement.getMetadataPolicy(uuid).orElseThrow(
             () -> new NotFoundException(String.format("No policy found with id %s", uuid))));
   }
 
-  @GetMapping("/admin/policy/metadata/effective/{tenantId}")
+  @GetMapping("/admin/policy/metadata/monitor/effective/{tenantId}")
   @ApiOperation(value = "Gets effective Metadata policies by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
   @JsonView(View.Admin.class)
-  public List<MetadataPolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
-    return metadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(tenantId)
-        .stream().map(MetadataPolicyDTO::new).collect(Collectors.toList());
+  public List<MonitorMetadataPolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
+    return monitorMetadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(tenantId)
+        .stream().map(MonitorMetadataPolicyDTO::new).collect(Collectors.toList());
   }
 
-  @GetMapping("/admin/policy/metadata/effective/{tenantId}/{monitorType}")
-  @ApiOperation(value = "Gets effective Metadata policy key/values by tenant id")
+  @GetMapping("/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
+  @ApiOperation(value = "Gets effective Metadata policies by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policy values Retrieved")})
   @JsonView(View.Admin.class)
-  public Map<String, String> getPolicyMap(@PathVariable String tenantId, @PathVariable MonitorType monitorType) {
-    return metadataPolicyManagement.getMetadataPoliciesForTenantAndType(tenantId, monitorType);
+  public Map<String, MonitorMetadataPolicyDTO> getPolicyMap(
+      @PathVariable String tenantId, @PathVariable TargetClassName className, @PathVariable MonitorType monitorType) {
+    return monitorMetadataPolicyManagement.getMetadataPoliciesForTenantAndType(tenantId, className, monitorType)
+        .entrySet()
+        .stream()
+        .collect(Collectors.toMap(
+            Entry::getKey,
+            entry -> new MonitorMetadataPolicyDTO(entry.getValue())
+        ));
   }
 
-  @GetMapping("/admin/policy/metadata")
-  @ApiOperation(value = "Gets all Metadata policies")
+  @GetMapping("/admin/policy/metadata/monitor")
+  @ApiOperation(value = "Gets all monitor metadata policies")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
   @JsonView(View.Admin.class)
-  public PagedContent<MetadataPolicyDTO> getAllMetadataPolicies(Pageable page) {
-    return PagedContent.fromPage(metadataPolicyManagement.getAllMetadataPolicies(page)
-        .map(MetadataPolicyDTO::new));
+  public PagedContent<MonitorMetadataPolicyDTO> getAllMetadataPolicies(Pageable page) {
+    return PagedContent.fromPage(monitorMetadataPolicyManagement.getAllMetadataPolicies(page)
+        .map(MonitorMetadataPolicyDTO::new));
   }
 
-  @PostMapping("/admin/policy/metadata")
+  @PostMapping("/admin/policy/metadata/monitor")
   @ResponseStatus(HttpStatus.CREATED)
-  @ApiOperation(value = "Creates new Metadata Policy")
+  @ApiOperation(value = "Creates new monitor metadata Policy")
   @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Metadata Policy")})
   @JsonView(View.Admin.class)
-  public MetadataPolicyDTO create(@Valid @RequestBody final MetadataPolicyCreate input)
+  public MonitorMetadataPolicyDTO createMonitorMetadata(@Valid @RequestBody final MonitorMetadataPolicyCreate input)
       throws IllegalArgumentException {
-    return new MetadataPolicyDTO(metadataPolicyManagement.createMetadataPolicy(input));
+    return new MonitorMetadataPolicyDTO(monitorMetadataPolicyManagement.createMetadataPolicy(input));
   }
 
-  @PutMapping("/admin/policy/metadata/{uuid}")
-  @ApiOperation(value = "Creates new Metadata Policy")
+  @PutMapping("/admin/policy/metadata/monitor/{uuid}")
+  @ApiOperation(value = "Updates a monitor metadata Policy")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully Created Metadata Policy")})
   @JsonView(View.Admin.class)
-  public MetadataPolicyDTO create(@PathVariable UUID uuid, @Valid @RequestBody final MetadataPolicyUpdate input)
+  public MonitorMetadataPolicyDTO update(@PathVariable UUID uuid, @Valid @RequestBody final MetadataPolicyUpdate input)
       throws IllegalArgumentException {
-    return new MetadataPolicyDTO(metadataPolicyManagement.updateMetadataPolicy(uuid, input));
+    return new MonitorMetadataPolicyDTO(monitorMetadataPolicyManagement.updateMetadataPolicy(uuid, input));
   }
 
-  @DeleteMapping("/admin/policy/metadata/{uuid}")
+  @DeleteMapping("/admin/policy/metadata/monitor/{uuid}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @ApiOperation(value = "Deletes specific Metadata Policy")
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Metadata Policy Deleted")})
   @JsonView(View.Admin.class)
   public void delete(@PathVariable UUID uuid) {
-    metadataPolicyManagement.removeMetadataPolicy(uuid);
+    monitorMetadataPolicyManagement.removeMetadataPolicy(uuid);
   }
 }

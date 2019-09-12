@@ -18,8 +18,8 @@ package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
-import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -34,7 +34,8 @@ public class MetadataPolicyCreate implements Serializable {
 
   String subscope;
 
-  MonitorType monitorType;
+  @NotNull
+  TargetClassName targetClassName;
 
   MetadataValueType valueType;
 

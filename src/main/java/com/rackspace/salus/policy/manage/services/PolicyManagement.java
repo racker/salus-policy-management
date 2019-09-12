@@ -47,7 +47,7 @@ public class PolicyManagement {
 
   List<String> getTenantsForPolicy(Policy policy) {
     List<String> tenantIds;
-    switch(policy.getScope()) {
+    switch (policy.getScope()) {
       case GLOBAL:
         tenantIds = getAllDistinctTenantIds();
         break;

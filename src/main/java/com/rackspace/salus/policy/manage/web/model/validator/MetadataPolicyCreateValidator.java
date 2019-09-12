@@ -18,6 +18,7 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import io.micrometer.core.instrument.util.StringUtils;
 
 public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {
   @Override
@@ -27,6 +28,6 @@ public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolic
 
   @Override
   protected boolean isSubscopeSet(MetadataPolicyCreate policy) {
-    return policy.getSubscope() != null && !policy.getSubscope().isBlank();
+    return StringUtils.isNotBlank(policy.getSubscope());
   }
 }

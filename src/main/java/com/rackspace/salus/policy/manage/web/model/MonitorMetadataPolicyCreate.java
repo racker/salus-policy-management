@@ -16,22 +16,12 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import java.util.UUID;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
+import com.rackspace.salus.telemetry.model.MonitorType;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-public class MonitorPolicyDTO extends PolicyDTO {
-  String name;
-  UUID monitorId;
-
-  public MonitorPolicyDTO(MonitorPolicy policy) {
-    super(policy);
-    this.name = policy.getName();
-    this.monitorId = policy.getMonitorId();
-  }
+@ValidPolicy
+public class MonitorMetadataPolicyCreate extends MetadataPolicyCreate {
+  MonitorType monitorType;
 }
