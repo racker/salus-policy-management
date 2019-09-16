@@ -20,7 +20,6 @@ import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.repositories.MetadataPolicyRepository;
 import java.util.Optional;
 import java.util.UUID;
-import javax.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,20 +29,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetadataPolicyManagement {
 
-  private final EntityManager entityManager;
   private final MetadataPolicyRepository metadataPolicyRepository;
-  private final PolicyEventProducer policyEventProducer;
-  private final PolicyManagement policyManagement;
 
   public MetadataPolicyManagement(
-      EntityManager entityManager,
-      MetadataPolicyRepository metadataPolicyRepository,
-      PolicyEventProducer policyEventProducer,
-      PolicyManagement policyManagement) {
-    this.entityManager = entityManager;
+      MetadataPolicyRepository metadataPolicyRepository) {
     this.metadataPolicyRepository = metadataPolicyRepository;
-    this.policyEventProducer = policyEventProducer;
-    this.policyManagement = policyManagement;
   }
 
   /**

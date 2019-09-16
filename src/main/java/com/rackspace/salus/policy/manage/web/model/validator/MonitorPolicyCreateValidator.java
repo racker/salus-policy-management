@@ -18,7 +18,7 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import io.micrometer.core.instrument.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
   @Override

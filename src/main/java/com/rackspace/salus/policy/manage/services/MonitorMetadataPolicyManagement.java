@@ -210,15 +210,15 @@ public class MonitorMetadataPolicyManagement {
 
     Map<String, MonitorMetadataPolicy> policyValuesMap = new HashMap<>();
     for (MonitorMetadataPolicy policy : listOfPolicies) {
-      if (!policy.getTargetClassName().equals(className)) {
-        // Skip any policy that is not related to the target class name.
-        continue;
-      } else if (policy.getMonitorType() == null) {
-        // Add any generic monitor policy if it does not already have a specific monitor type value set.
-        policyValuesMap.putIfAbsent(policy.getKey(), policy);
-      } else if (policy.getMonitorType().equals(monitorType)) {
-        // Add any policy for the given monitor type.  Override the previously set generic policy if one was already added.
-        policyValuesMap.put(policy.getKey(), policy);
+      // Only use policies that are related to the target class name.
+      if (policy.getTargetClassName().equals(className)) {
+        if (policy.getMonitorType() == null) {
+          // Add any generic monitor policy if it does not already have a specific monitor type value set.
+          policyValuesMap.putIfAbsent(policy.getKey(), policy);
+        } else if (policy.getMonitorType().equals(monitorType)) {
+          // Add any policy for the given monitor type.  Override the previously set generic policy if one was already added.
+          policyValuesMap.put(policy.getKey(), policy);
+        }
       }
     }
     return policyValuesMap;
