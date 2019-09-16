@@ -18,7 +18,7 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import io.micrometer.core.instrument.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {
   @Override
