@@ -2,6 +2,7 @@
   "id": "5cb19cb3-03e3-4a71-8051-cc7c4bc0c029",
   "scope": "GLOBAL",
   "subscope": null,
+  "targetClassName": "Monitor",
   "monitorType": "ping",
   "valueType": "STRING",
   "key": "test_key",

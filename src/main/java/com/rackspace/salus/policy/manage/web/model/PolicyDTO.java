@@ -21,8 +21,10 @@ import com.rackspace.salus.telemetry.model.PolicyScope;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public abstract class PolicyDTO {
   UUID id;
   PolicyScope scope;

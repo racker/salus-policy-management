@@ -18,21 +18,23 @@ package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
-import com.rackspace.salus.telemetry.model.MonitorType;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 public class MetadataPolicyDTO extends PolicyDTO {
-  MonitorType monitorType;
+  TargetClassName targetClassName;
   MetadataValueType valueType;
   String key;
   String value;
 
   public MetadataPolicyDTO(MetadataPolicy policy) {
     super(policy);
-    this.monitorType = policy.getMonitorType();
+    this.targetClassName = policy.getTargetClassName();
     this.valueType = policy.getValueType();
     this.key = policy.getKey();
     this.value = policy.getValue();

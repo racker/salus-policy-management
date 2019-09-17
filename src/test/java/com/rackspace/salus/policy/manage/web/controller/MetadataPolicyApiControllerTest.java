@@ -34,13 +34,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rackspace.salus.policy.manage.services.MetadataPolicyManagement;
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
+import com.rackspace.salus.policy.manage.services.MonitorMetadataPolicyManagement;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
-import com.rackspace.salus.telemetry.entities.MetadataPolicy;
+import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,25 +74,26 @@ public class MetadataPolicyApiControllerTest {
   ObjectMapper objectMapper;
 
   @MockBean
-  MetadataPolicyManagement metadataPolicyManagement;
+  MonitorMetadataPolicyManagement monitorMetadataPolicyManagement;
 
   @Test
   public void testGetById() throws Exception {
-    MetadataPolicy policy = (MetadataPolicy) new MetadataPolicy()
+    MonitorMetadataPolicy policy = (MonitorMetadataPolicy) new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
         .setValue("test_value")
         .setKey("test_key")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("5cb19cb3-03e3-4a71-8051-cc7c4bc0c029"))
         .setCreatedTimestamp(Instant.EPOCH)
         .setUpdatedTimestamp(Instant.EPOCH);
 
-    when(metadataPolicyManagement.getMetadataPolicy(any()))
+    when(monitorMetadataPolicyManagement.getMetadataPolicy(any()))
         .thenReturn(Optional.of(policy));
 
     mvc.perform(get(
-        "/api/admin/policy/metadata/{uuid}", policy.getId())
+        "/api/admin/policy/metadata/monitor/{uuid}", policy.getId())
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -100,29 +102,29 @@ public class MetadataPolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_metadata_policy.json"), true));
 
-    verify(metadataPolicyManagement).getMetadataPolicy(policy.getId());
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).getMetadataPolicy(policy.getId());
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 
   @Test
   public void testGetAllMetadataPolicies() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    final List<MetadataPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MetadataPolicy.class);
+    final List<MonitorMetadataPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorMetadataPolicy.class);
 
     // Use the APIs default Pageable settings
     int page = 0;
     int pageSize = 20;
 
-    Page<MetadataPolicy> pageOfPolicies = new PageImpl<>(
+    Page<MonitorMetadataPolicy> pageOfPolicies = new PageImpl<>(
         listOfPolicies,
         PageRequest.of(page, pageSize),
         listOfPolicies.size());
 
-    when(metadataPolicyManagement.getAllMetadataPolicies(any()))
+    when(monitorMetadataPolicyManagement.getAllMetadataPolicies(any()))
         .thenReturn(pageOfPolicies);
 
     mvc.perform(get(
-        "/api/admin/policy/metadata", tenantId)
+        "/api/admin/policy/metadata/monitor", tenantId)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -132,19 +134,19 @@ public class MetadataPolicyApiControllerTest {
         .andExpect(jsonPath("$.totalPages", equalTo(1)))
         .andExpect(jsonPath("$.totalElements", equalTo(5)));
 
-    verify(metadataPolicyManagement).getAllMetadataPolicies(PageRequest.of(page, pageSize));
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).getAllMetadataPolicies(PageRequest.of(page, pageSize));
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 
   @Test
   public void testGetEffectivePoliciesByTenantId() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    final List<MetadataPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MetadataPolicy.class);
-    when(metadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(anyString()))
+    final List<MonitorMetadataPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorMetadataPolicy.class);
+    when(monitorMetadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(anyString()))
         .thenReturn(listOfPolicies);
 
     mvc.perform(get(
-        "/api/admin/policy/metadata/effective/{tenantId}", tenantId)
+        "/api/admin/policy/metadata/monitor/effective/{tenantId}", tenantId)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -152,34 +154,36 @@ public class MetadataPolicyApiControllerTest {
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicies)));
 
-    verify(metadataPolicyManagement).getEffectiveMetadataPoliciesForTenant(tenantId);
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).getEffectiveMetadataPoliciesForTenant(tenantId);
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 
   @Test
   public void testCreatePolicy() throws Exception {
-    MetadataPolicy policy = (MetadataPolicy) new MetadataPolicy()
+    MonitorMetadataPolicy policy = (MonitorMetadataPolicy) new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
         .setValue("test_value")
         .setKey("test_key")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("5cb19cb3-03e3-4a71-8051-cc7c4bc0c029"))
         .setCreatedTimestamp(Instant.EPOCH)
         .setUpdatedTimestamp(Instant.EPOCH);
 
-    when(metadataPolicyManagement.createMetadataPolicy(any()))
+    when(monitorMetadataPolicyManagement.createMetadataPolicy(any()))
         .thenReturn(policy);
 
     // All we need is a valid create object; doesn't matter what else is set.
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
+        .setTargetClassName(TargetClassName.Monitor)
         .setKey(RandomStringUtils.randomAlphabetic(10))
         .setValue(RandomStringUtils.randomAlphabetic(10));
 
     mvc.perform(post(
-        "/api/admin/policy/metadata")
+        "/api/admin/policy/metadata/monitor")
         .content(objectMapper.writeValueAsString(policyCreate))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
@@ -189,23 +193,24 @@ public class MetadataPolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_metadata_policy.json"), true));
 
-    verify(metadataPolicyManagement).createMetadataPolicy(policyCreate);
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).createMetadataPolicy(policyCreate);
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 
   @Test
   public void testUpdatePolicy() throws Exception {
-    MetadataPolicy policy = (MetadataPolicy) new MetadataPolicy()
+    MonitorMetadataPolicy policy = (MonitorMetadataPolicy) new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
         .setValue("test_value")
         .setKey("test_key")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("5cb19cb3-03e3-4a71-8051-cc7c4bc0c029"))
         .setCreatedTimestamp(Instant.EPOCH)
         .setUpdatedTimestamp(Instant.EPOCH);
 
-    when(metadataPolicyManagement.updateMetadataPolicy(any(), any()))
+    when(monitorMetadataPolicyManagement.updateMetadataPolicy(any(), any()))
         .thenReturn(policy);
 
     // All we need is a valid update object; doesn't matter what values are set.
@@ -214,7 +219,7 @@ public class MetadataPolicyApiControllerTest {
 
     UUID id = UUID.randomUUID();
     mvc.perform(put(
-        "/api/admin/policy/metadata/{uuid}", id)
+        "/api/admin/policy/metadata/monitor/{uuid}", id)
         .content(objectMapper.writeValueAsString(policyUpdate))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
@@ -224,20 +229,20 @@ public class MetadataPolicyApiControllerTest {
         .andExpect(content().json(
             readContent("PolicyApiControllerTest/global_metadata_policy.json"), true));
 
-    verify(metadataPolicyManagement).updateMetadataPolicy(id, policyUpdate);
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).updateMetadataPolicy(id, policyUpdate);
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 
   @Test
   public void testRemoveMetadataPolicy() throws Exception {
     UUID id = UUID.randomUUID();
     mvc.perform(delete(
-        "/api/admin/policy/metadata/{uuid}", id)
+        "/api/admin/policy/metadata/monitor/{uuid}", id)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isNoContent());
 
-    verify(metadataPolicyManagement).removeMetadataPolicy(id);
-    verifyNoMoreInteractions(metadataPolicyManagement);
+    verify(monitorMetadataPolicyManagement).removeMetadataPolicy(id);
+    verifyNoMoreInteractions(monitorMetadataPolicyManagement);
   }
 }

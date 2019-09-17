@@ -33,8 +33,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
+import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
 import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
@@ -45,7 +46,8 @@ import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.telemetry.repositories.MetadataPolicyRepository;
+import com.rackspace.salus.telemetry.model.TargetClassName;
+import com.rackspace.salus.telemetry.repositories.MonitorMetadataPolicyRepository;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.telemetry.repositories.ResourceRepository;
@@ -76,9 +78,9 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({PolicyManagement.class, MetadataPolicyManagement.class,
+@Import({PolicyManagement.class, MonitorMetadataPolicyManagement.class,
     TenantManagement.class, DatabaseConfig.class})
-public class MetadataPolicyManagementTest {
+public class MonitorMetadataPolicyManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
 
@@ -92,7 +94,7 @@ public class MetadataPolicyManagementTest {
   PolicyManagement policyManagement;
 
   @Autowired
-  MetadataPolicyManagement metadataPolicyManagement;
+  MonitorMetadataPolicyManagement monitorMetadataPolicyManagement;
 
   @Autowired
   TenantManagement tenantManagement;
@@ -101,7 +103,7 @@ public class MetadataPolicyManagementTest {
   PolicyRepository policyRepository;
 
   @Autowired
-  MetadataPolicyRepository metadataPolicyRepository;
+  MonitorMetadataPolicyRepository monitorMetadataPolicyRepository;
 
   @Autowired
   TenantMetadataRepository tenantMetadataRepository;
@@ -118,26 +120,27 @@ public class MetadataPolicyManagementTest {
   @Mock
   TypedQuery query;
 
-  private MetadataPolicy defaultMetadataPolicy;
+  private MonitorMetadataPolicy defaultMetadataPolicy;
 
   @Before
   public void setup() {
-    MetadataPolicy policy = (MetadataPolicy) new MetadataPolicy()
+    MonitorMetadataPolicy policy = (MonitorMetadataPolicy) new MonitorMetadataPolicy()
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(RandomStringUtils.randomAlphabetic(10))
         .setValueType(MetadataValueType.STRING)
+        .setTargetClassName(TargetClassName.Monitor)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setScope(PolicyScope.ACCOUNT_TYPE);
 
-    defaultMetadataPolicy = metadataPolicyRepository.save(policy);
+    defaultMetadataPolicy = monitorMetadataPolicyRepository.save(policy);
   }
 
   @Test
   public void testGetMetadataPolicy() {
-    Optional<MetadataPolicy> p = metadataPolicyManagement.getMetadataPolicy(defaultMetadataPolicy.getId());
+    Optional<MonitorMetadataPolicy> p = monitorMetadataPolicyManagement.getMetadataPolicy(defaultMetadataPolicy.getId());
 
     assertTrue(p.isPresent());
-    MetadataPolicy mp = p.get();
+    MonitorMetadataPolicy mp = p.get();
     assertThat(mp.getId(), notNullValue());
     assertThat(mp.getScope(), isOneOf(PolicyScope.values()));
     assertThat(mp.getScope(), equalTo(defaultMetadataPolicy.getScope()));
@@ -162,15 +165,16 @@ public class MetadataPolicyManagementTest {
 
     mockGetTenantsUsingPolicyKey(List.of(tenantId));
 
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(RandomStringUtils.randomAlphabetic(10))
-        .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping);
+        .setValueType(MetadataValueType.STRING);
 
-    MetadataPolicy policy = metadataPolicyManagement.createMetadataPolicy(policyCreate);
+    MonitorMetadataPolicy policy = monitorMetadataPolicyManagement.createMetadataPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
@@ -194,16 +198,17 @@ public class MetadataPolicyManagementTest {
   public void testCreateMetadataPolicy_multipleTenants() {
     List<String> tenantIds = createMultipleTenants("metadataKey");
 
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setMonitorType(MonitorType.x509_cert)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.GLOBAL)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(RandomStringUtils.randomAlphabetic(10))
-        .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.x509_cert);
+        .setValueType(MetadataValueType.STRING);
 
     mockGetTenantsUsingPolicyKey(tenantIds);
 
-    MetadataPolicy policy = metadataPolicyManagement.createMetadataPolicy(policyCreate);
+    MonitorMetadataPolicy policy = monitorMetadataPolicyManagement.createMetadataPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
@@ -228,19 +233,20 @@ public class MetadataPolicyManagementTest {
   public void testCreateMetadataPolicy_differentMonitorType() {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
 
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setMonitorType(MonitorType.net_response)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(defaultMetadataPolicy.getScope())
         .setSubscope(defaultMetadataPolicy.getSubscope())
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(defaultMetadataPolicy.getKey())
-        .setValueType(MetadataValueType.DURATION)
-        .setMonitorType(MonitorType.net_response);
+        .setValueType(MetadataValueType.DURATION);
 
     assertThat(policyCreate.getMonitorType(), not(equalTo(defaultMetadataPolicy.getMonitorType())));
 
     mockGetTenantsUsingPolicyKey(List.of(tenantId));
 
-    MetadataPolicy policy = metadataPolicyManagement.createMetadataPolicy(policyCreate);
+    MonitorMetadataPolicy policy = monitorMetadataPolicyManagement.createMetadataPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
@@ -262,20 +268,22 @@ public class MetadataPolicyManagementTest {
 
   @Test
   public void testCreateMetadataPolicy_duplicatePolicy() {
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setMonitorType(defaultMetadataPolicy.getMonitorType())
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(defaultMetadataPolicy.getScope())
         .setSubscope(defaultMetadataPolicy.getSubscope())
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(defaultMetadataPolicy.getKey())
-        .setValueType(MetadataValueType.DURATION)
-        .setMonitorType(defaultMetadataPolicy.getMonitorType());
+        .setValueType(MetadataValueType.DURATION);
 
-    assertThatThrownBy(() -> metadataPolicyManagement.createMetadataPolicy(policyCreate))
+    assertThatThrownBy(() -> monitorMetadataPolicyManagement.createMetadataPolicy(policyCreate))
       .isInstanceOf(AlreadyExistsException.class)
       .hasMessage(
-          String.format("Policy already exists with scope:subscope:type:key of %s:%s:%s:%s",
+          String.format("Policy already exists with scope:subscope:class:type:key of %s:%s:%s:%s:%s",
               policyCreate.getScope(),
               policyCreate.getSubscope(),
+              policyCreate.getTargetClassName(),
               policyCreate.getMonitorType(),
               policyCreate.getKey())
       );
@@ -296,17 +304,18 @@ public class MetadataPolicyManagementTest {
         .setTenantId(tenantId)
         .setMetadata(Collections.emptyMap()));
     
-    MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
+    MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(RandomStringUtils.randomAlphabetic(10))
-        .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping);
+        .setValueType(MetadataValueType.STRING);
 
     mockGetTenantsUsingPolicyKey(List.of(tenantId));
 
-    Policy policy = metadataPolicyManagement.createMetadataPolicy(policyCreate);
+    Policy policy = monitorMetadataPolicyManagement.createMetadataPolicy(policyCreate);
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
     // Verify the Policy Event looks correct
@@ -317,11 +326,11 @@ public class MetadataPolicyManagementTest {
     ));
 
     // Verify the monitor in the PolicyEvent can be found
-    Optional<MetadataPolicy> saved = metadataPolicyManagement
+    Optional<MonitorMetadataPolicy> saved = monitorMetadataPolicyManagement
         .getMetadataPolicy(policyEventArg.getValue().getPolicyId());
     assertTrue(saved.isPresent());
 
-    MetadataPolicy p = saved.get();
+    MonitorMetadataPolicy p = saved.get();
     assertThat(p.getScope(), equalTo(policyCreate.getScope()));
     assertThat(p.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(p.getMonitorType(), equalTo(policyCreate.getMonitorType()));
@@ -350,104 +359,114 @@ public class MetadataPolicyManagementTest {
     List<Policy> expected = new ArrayList<>();
 
     // Create a global policy that will not be overridden
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("OnlyGlobal")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
         .setScope(PolicyScope.GLOBAL)));
 
     // Create global policy that will be overridden
     policyRepository.save(
-        new MetadataPolicy()
+        new MonitorMetadataPolicy()
+            .setMonitorType(MonitorType.ping)
+            .setTargetClassName(TargetClassName.Monitor)
             .setValue(RandomStringUtils.randomAlphabetic(10))
             .setKey("OverriddenByAccountType")
             .setValueType(MetadataValueType.STRING)
-            .setMonitorType(MonitorType.ping)
             .setScope(PolicyScope.GLOBAL)
     );
 
     // Create a global policy with the same key but different monitor type
     // that will not be overridden.
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.procstat)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("OnlyGlobal")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.procstat)
         .setScope(PolicyScope.GLOBAL)));
 
     // Create AccountType policy that will override global
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("OverriddenByAccountType")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
         .setSubscope(testAccountType)
         .setScope(PolicyScope.ACCOUNT_TYPE)));
 
     // Create AccountType policy that will be overridden by tenant
     policyRepository.save(
-        new MetadataPolicy()
+        new MonitorMetadataPolicy()
+            .setMonitorType(MonitorType.ping)
+            .setTargetClassName(TargetClassName.Monitor)
             .setValue(RandomStringUtils.randomAlphabetic(10))
             .setKey("OverriddenByTenant")
             .setValueType(MetadataValueType.STRING)
-            .setMonitorType(MonitorType.ping)
             .setSubscope(testAccountType)
             .setScope(PolicyScope.ACCOUNT_TYPE)
     );
 
     // Create AccountType policy that will not be overridden
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("UniqueAccountPolicy")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
         .setSubscope(testAccountType)
         .setScope(PolicyScope.ACCOUNT_TYPE)));
 
     // Create AccountType policy that is irrelevant to our test tenant.
     policyRepository.save(
-        new MetadataPolicy()
+        new MonitorMetadataPolicy()
+            .setMonitorType(MonitorType.ping)
+            .setTargetClassName(TargetClassName.Monitor)
             .setValue(RandomStringUtils.randomAlphabetic(10))
             .setKey("IrrelevantAccountType")
             .setValueType(MetadataValueType.STRING)
-            .setMonitorType(MonitorType.ping)
             .setSubscope("IrrelevantAccountType")
             .setScope(PolicyScope.ACCOUNT_TYPE)
     );
 
     // Create Tenant policy that will override AccountType
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("OverriddenByTenant")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
         .setSubscope(tenantId)
         .setScope(PolicyScope.TENANT)));
 
     // Create Tenant policy that will not be overridden
-    expected.add(policyRepository.save(new MetadataPolicy()
+    expected.add(policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.ping)
+        .setTargetClassName(TargetClassName.Monitor)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey("UniqueTenantPolicy")
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.ping)
         .setSubscope(tenantId)
         .setScope(PolicyScope.TENANT)));
 
     // Create Tenant policy that is irrelevant to our test tenant.
     policyRepository.save(
-        new MetadataPolicy()
+        new MonitorMetadataPolicy()
+            .setMonitorType(MonitorType.ping)
+            .setTargetClassName(TargetClassName.Monitor)
             .setValue(RandomStringUtils.randomAlphabetic(10))
             .setKey("IrrelevantTenant")
             .setValueType(MetadataValueType.STRING)
-            .setMonitorType(MonitorType.ping)
             .setSubscope(RandomStringUtils.randomAlphabetic(10))
             .setScope(PolicyScope.TENANT)
     );
 
-    List<MetadataPolicy> effectivePolicies = metadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(tenantId);
+    List<MonitorMetadataPolicy> effectivePolicies = monitorMetadataPolicyManagement.getEffectiveMetadataPoliciesForTenant(tenantId);
 
-    assertThat(effectivePolicies, hasSize(6));
+    assertThat(effectivePolicies, hasSize(expected.size()));
     assertThat(effectivePolicies, containsInAnyOrder(expected.toArray()));
   }
 
@@ -456,19 +475,20 @@ public class MetadataPolicyManagementTest {
     String tenantId = createSingleTenant();
 
     // Create a policy to remove
-    MetadataPolicy saved = (MetadataPolicy) policyRepository.save(new MetadataPolicy()
+    MetadataPolicy saved = (MetadataPolicy) policyRepository.save(new MonitorMetadataPolicy()
+        .setMonitorType(MonitorType.disk)
         .setValue(RandomStringUtils.randomAlphabetic(10))
         .setKey(RandomStringUtils.randomAlphabetic(10))
+        .setTargetClassName(TargetClassName.Monitor)
         .setValueType(MetadataValueType.STRING)
-        .setMonitorType(MonitorType.disk)
         .setScope(PolicyScope.GLOBAL));
 
     mockGetTenantsUsingPolicyKey(List.of(tenantId));
 
-    metadataPolicyManagement.removeMetadataPolicy(saved.getId());
+    monitorMetadataPolicyManagement.removeMetadataPolicy(saved.getId());
 
-    verify(entityManager).createNamedQuery("Monitor.getTenantsUsingTemplateVariable", String.class);
-    verify(query).setParameter("variable", saved.getKey());
+    verify(entityManager).createNamedQuery("Monitor.getTenantsUsingPolicyMetadataInMonitor", String.class);
+    verify(query).setParameter("metadataKey", saved.getKey());
     verify(query).getResultList();
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
@@ -478,7 +498,7 @@ public class MetadataPolicyManagementTest {
             .setTenantId(tenantId)
     ));
 
-    Optional<MetadataPolicy> removed = metadataPolicyManagement.getMetadataPolicy(
+    Optional<MonitorMetadataPolicy> removed = monitorMetadataPolicyManagement.getMetadataPolicy(
         policyEventArg.getValue().getPolicyId());
 
     assertTrue(removed.isEmpty());
@@ -489,7 +509,7 @@ public class MetadataPolicyManagementTest {
   @Test
   public void testRemoveMetadataPolicy_doesntExist() {
     UUID id = UUID.randomUUID();
-    assertThatThrownBy(() -> metadataPolicyManagement.removeMetadataPolicy(id))
+    assertThatThrownBy(() -> monitorMetadataPolicyManagement.removeMetadataPolicy(id))
         .isInstanceOf(NotFoundException.class)
         .hasMessage(
             String.format("No policy found with id %s", id)
@@ -502,7 +522,7 @@ public class MetadataPolicyManagementTest {
   }
 
   private List<String> createMultipleTenants(String metadataKey) {
-    // update this to create tenants that use the field
+    // update this to create tenants that use the parameter
     List<Resource> resources = podamFactory.manufacturePojo(ArrayList.class, Resource.class);
     return StreamSupport.stream(resourceRepository.saveAll(resources).spliterator(), false)
         .map(Resource::getTenantId)

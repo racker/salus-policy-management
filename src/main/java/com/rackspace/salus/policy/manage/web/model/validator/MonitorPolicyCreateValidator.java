@@ -18,6 +18,7 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import org.apache.commons.lang3.StringUtils;
 
 public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
   @Override
@@ -27,6 +28,6 @@ public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyC
 
   @Override
   protected boolean isSubscopeSet(MonitorPolicyCreate policy) {
-    return policy.getSubscope() != null && !policy.getSubscope().isBlank();
+    return StringUtils.isNotBlank(policy.getSubscope());
   }
 }
