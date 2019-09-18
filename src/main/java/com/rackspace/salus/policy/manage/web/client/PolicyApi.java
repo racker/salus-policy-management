@@ -16,8 +16,13 @@
 
 package com.rackspace.salus.policy.manage.web.client;
 
+import com.rackspace.salus.policy.manage.web.model.MetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
+import com.rackspace.salus.telemetry.model.MonitorType;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -29,4 +34,6 @@ import java.util.UUID;
 public interface PolicyApi {
   List<MonitorPolicyDTO> getEffectiveMonitorPolicies(String tenantId);
   List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId);
+  List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId);
+  Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(String tenantId, TargetClassName className, MonitorType monitorType);
 }

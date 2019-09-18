@@ -16,9 +16,14 @@
 
 package com.rackspace.salus.policy.manage.web.client;
 
+import com.rackspace.salus.policy.manage.web.model.MetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
+import com.rackspace.salus.telemetry.model.MonitorType;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.core.ParameterizedTypeReference;
@@ -54,7 +59,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public class PolicyApiClient implements PolicyApi {
   private static final ParameterizedTypeReference<List<MonitorPolicyDTO>> LIST_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
+  private static final ParameterizedTypeReference<List<MonitorMetadataPolicyDTO>> LIST_OF_MONITOR_METADATA_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<UUID>> LIST_OF_UUID = new ParameterizedTypeReference<>() {};
+  private static final ParameterizedTypeReference<Map<String, MonitorMetadataPolicyDTO>> MAP_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private final RestTemplate restTemplate;
 
   public PolicyApiClient(RestTemplate restTemplate) {
@@ -86,6 +93,34 @@ public class PolicyApiClient implements PolicyApi {
         HttpMethod.GET,
         null,
         LIST_OF_UUID
+    ).getBody();
+  }
+
+  public List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}")
+        .build(tenantId)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_MONITOR_METADATA_POLICY
+    ).getBody();
+  }
+
+  public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(String tenantId, TargetClassName className, MonitorType monitorType) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
+        .build(tenantId, className, monitorType)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        MAP_OF_MONITOR_POLICY
     ).getBody();
   }
 }

@@ -16,22 +16,16 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import java.util.UUID;
+import com.rackspace.salus.telemetry.model.MetadataValueType;
+import java.io.Serializable;
+import javax.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-public class MonitorPolicyDTO extends PolicyDTO {
-  String name;
-  UUID monitorId;
+public class MetadataPolicyUpdate implements Serializable {
 
-  public MonitorPolicyDTO(MonitorPolicy policy) {
-    super(policy);
-    this.name = policy.getName();
-    this.monitorId = policy.getMonitorId();
-  }
+  MetadataValueType valueType;
+
+  @NotBlank
+  String value;
 }

@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-package com.rackspace.salus.policy.manage.web.model;
+package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import java.util.UUID;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import org.apache.commons.lang3.StringUtils;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-public class MonitorPolicyDTO extends PolicyDTO {
-  String name;
-  UUID monitorId;
+public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {
+  @Override
+  protected PolicyScope getScope(MetadataPolicyCreate policy) {
+    return policy.getScope();
+  }
 
-  public MonitorPolicyDTO(MonitorPolicy policy) {
-    super(policy);
-    this.name = policy.getName();
-    this.monitorId = policy.getMonitorId();
+  @Override
+  protected boolean isSubscopeSet(MetadataPolicyCreate policy) {
+    return StringUtils.isNotBlank(policy.getSubscope());
   }
 }

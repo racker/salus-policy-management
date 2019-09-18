@@ -69,7 +69,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest(showSql = false)
-@Import({MonitorPolicyManagement.class, TenantManagement.class, DatabaseConfig.class})
+@Import({PolicyManagement.class, MonitorPolicyManagement.class,
+    TenantManagement.class, DatabaseConfig.class})
 public class MonitorPolicyManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
@@ -79,6 +80,9 @@ public class MonitorPolicyManagementTest {
 
   @MockBean
   PolicyEventProducer policyEventProducer;
+
+  @Autowired
+  PolicyManagement policyManagement;
 
   @Autowired
   MonitorPolicyManagement monitorPolicyManagement;
@@ -416,7 +420,7 @@ public class MonitorPolicyManagementTest {
 
     List<String> expectedIds = resources.stream().map(Resource::getTenantId).collect(Collectors.toList());
 
-    List<String> tenantIds = monitorPolicyManagement.getAllDistinctTenantIds();
+    List<String> tenantIds = policyManagement.getAllDistinctTenantIds();
 
     assertThat(tenantIds, notNullValue());
     assertThat(tenantIds, hasSize(expectedIds.size()));
