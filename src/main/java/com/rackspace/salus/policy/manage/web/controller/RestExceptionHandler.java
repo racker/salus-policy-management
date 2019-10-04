@@ -37,12 +37,6 @@ public class RestExceptionHandler extends
     super(errorAttributes);
   }
 
-  @ExceptionHandler({IllegalArgumentException.class})
-  public ResponseEntity<?> handleBadRequest(
-      HttpServletRequest request) {
-    return respondWith(request, HttpStatus.BAD_REQUEST);
-  }
-
   @ExceptionHandler({NotFoundException.class})
   public ResponseEntity<?> handleNotFound(
       HttpServletRequest request) {
