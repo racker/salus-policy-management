@@ -9,8 +9,6 @@ management:
         db: salus
         enabled: ${salus.metrics.influx.enabled:false}
 spring:
-  application:
-    name: salus-policy-management
   kafka:
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
