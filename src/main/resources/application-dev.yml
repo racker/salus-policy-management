@@ -6,8 +6,6 @@ salus:
     monitorManagementUrl: http://localhost:8089
 spring:
   jpa:
-    hibernate:
-      ddl-auto: update
     database-platform: org.hibernate.dialect.MySQL5Dialect
     properties:
       hibernate:
