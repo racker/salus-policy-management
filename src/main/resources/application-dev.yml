@@ -6,7 +6,7 @@ salus:
     monitorManagementUrl: http://localhost:8089
 spring:
   jpa:
-    database-platform: org.hibernate.dialect.MySQL5Dialect
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
     properties:
       hibernate:
         generate_statistics: false
