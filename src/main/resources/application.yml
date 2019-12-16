@@ -24,3 +24,5 @@ spring:
   jackson:
     mapper:
       default-view-inclusion: true
+  zipkin:
+    enabled: false
