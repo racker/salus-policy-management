@@ -199,7 +199,7 @@ public class MonitorMetadataPolicyManagementTest {
     List<String> tenantIds = createMultipleTenants("metadataKey");
 
     MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
-        .setMonitorType(MonitorType.x509_cert)
+        .setMonitorType(MonitorType.ssl)
         .setTargetClassName(TargetClassName.Monitor)
         .setScope(PolicyScope.GLOBAL)
         .setValue(RandomStringUtils.randomAlphabetic(10))
