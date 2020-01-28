@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -23,28 +24,28 @@ import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.entities.Monitor;
-import com.rackspace.salus.telemetry.entities.Resource;
-import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
+import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
+import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
+import com.rackspace.salus.telemetry.messaging.PolicyEvent;
+import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
-import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
-import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
-import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
-import com.rackspace.salus.telemetry.messaging.PolicyEvent;
-import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,6 +69,7 @@ import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
+@EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
 @Import({PolicyManagement.class, MonitorPolicyManagement.class,
     TenantManagement.class, DatabaseConfig.class})

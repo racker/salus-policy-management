@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import com.rackspace.salus.telemetry.repositories.ResourceRepository;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -77,6 +78,7 @@ import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
+@EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
 @Import({PolicyManagement.class, MonitorMetadataPolicyManagement.class,
     TenantManagement.class, DatabaseConfig.class})
