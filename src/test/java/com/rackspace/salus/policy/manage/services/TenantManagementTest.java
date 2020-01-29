@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
+import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
+import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,7 @@ import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
+@EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
 @Import({TenantManagement.class, DatabaseConfig.class})
 public class TenantManagementTest {
