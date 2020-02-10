@@ -18,7 +18,7 @@ package com.rackspace.salus.policy.manage.web.model;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.telemetry.model.View;
+import com.rackspace.salus.common.web.View;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;

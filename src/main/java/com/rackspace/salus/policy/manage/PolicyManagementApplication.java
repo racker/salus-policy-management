@@ -19,12 +19,14 @@ package com.rackspace.salus.policy.manage;
 import com.rackspace.salus.common.messaging.EnableSalusKafkaMessaging;
 import com.rackspace.salus.common.web.EnableExtendedErrorAttributes;
 import com.rackspace.salus.common.util.DumpConfigProperties;
+import com.rackspace.salus.common.web.EnableRoleBasedJsonViews;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @EnableSalusKafkaMessaging
 @EnableExtendedErrorAttributes
+@EnableRoleBasedJsonViews
 public class PolicyManagementApplication {
 
   public static void main(String[] args) {
