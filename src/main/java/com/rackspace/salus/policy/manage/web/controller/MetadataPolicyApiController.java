@@ -16,16 +16,14 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.policy.manage.services.MonitorMetadataPolicyManagement;
+import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
 import com.rackspace.salus.telemetry.model.TargetClassName;
-import com.rackspace.salus.common.web.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;

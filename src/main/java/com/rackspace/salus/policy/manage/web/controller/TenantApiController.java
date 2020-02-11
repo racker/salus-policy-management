@@ -16,12 +16,10 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.policy.manage.services.TenantManagement;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
-import com.rackspace.salus.common.web.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
