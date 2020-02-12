@@ -16,13 +16,11 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.policy.manage.services.MonitorPolicyManagement;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
-import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -59,7 +57,6 @@ public class MonitorPolicyApiController {
   @GetMapping("/admin/policy/monitors/{uuid}")
   @ApiOperation(value = "Gets specific Monitor Policy by id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor Policy Retrieved")})
-  @JsonView(View.Admin.class)
   public MonitorPolicyDTO getById(@PathVariable UUID uuid) throws NotFoundException {
     return new MonitorPolicyDTO(
         monitorPolicyManagement.getMonitorPolicy(uuid).orElseThrow(
@@ -69,7 +66,6 @@ public class MonitorPolicyApiController {
   @GetMapping("/admin/policy/monitors/effective/{tenantId}")
   @ApiOperation(value = "Gets effective monitor policies by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
-  @JsonView(View.Admin.class)
   public List<MonitorPolicyDTO> getEffectivePoliciesByTenantId(@PathVariable String tenantId) {
     return monitorPolicyManagement.getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
@@ -78,7 +74,6 @@ public class MonitorPolicyApiController {
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/ids")
   @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor policy ids retrieved")})
-  @JsonView(View.Admin.class)
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
     return monitorPolicyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
   }
@@ -86,7 +81,6 @@ public class MonitorPolicyApiController {
   @GetMapping("/admin/policy/monitors")
   @ApiOperation(value = "Gets all monitor policies")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Policies Retrieved")})
-  @JsonView(View.Admin.class)
   public PagedContent<MonitorPolicyDTO> getAllMonitorPolicies(Pageable page) {
     return PagedContent.fromPage(monitorPolicyManagement.getAllMonitorPolicies(page)
         .map(MonitorPolicyDTO::new));
@@ -96,7 +90,6 @@ public class MonitorPolicyApiController {
   @ResponseStatus(HttpStatus.CREATED)
   @ApiOperation(value = "Creates new Monitor for Tenant")
   @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Monitor Policy")})
-  @JsonView(View.Admin.class)
   public MonitorPolicyDTO create(@Valid @RequestBody final MonitorPolicyCreate input)
       throws IllegalArgumentException {
     return new MonitorPolicyDTO(monitorPolicyManagement.createMonitorPolicy(input));
@@ -106,7 +99,6 @@ public class MonitorPolicyApiController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @ApiOperation(value = "Deletes specific Monitor Policy")
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Monitor Policy Deleted")})
-  @JsonView(View.Admin.class)
   public void delete(@PathVariable UUID uuid) {
     monitorPolicyManagement.removeMonitorPolicy(uuid);
   }

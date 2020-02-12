@@ -16,12 +16,10 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.rackspace.salus.policy.manage.services.TenantManagement;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataDTO;
 import com.rackspace.salus.telemetry.model.NotFoundException;
-import com.rackspace.salus.telemetry.model.View;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -53,7 +51,6 @@ public class TenantApiController {
   @GetMapping("/public/account/{tenantId}")
   @ApiOperation(value = "Retrieves miscellaneous information stored for a particular tenant")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully retrieved tenant metadata")})
-  @JsonView(View.Public.class)
   public TenantMetadataDTO getTenantMetadata(@PathVariable String tenantId) {
     return new TenantMetadataDTO(
         tenantManagement.getMetadata(tenantId).orElseThrow(
@@ -63,7 +60,6 @@ public class TenantApiController {
   @PutMapping("/public/account/{tenantId}")
   @ApiOperation(value = "Creates or updates miscellaneous information stored for a particular tenant")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully updated tenant metadata")})
-  @JsonView(View.Public.class)
   public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
       @RequestBody TenantMetadataCU input) {
     return new TenantMetadataDTO(tenantManagement.upsertTenantMetadata(tenantId, input));
@@ -73,7 +69,6 @@ public class TenantApiController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @ApiOperation(value = "Deletes all tenant metadata for an account")
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Successfully removed tenant metadata")})
-  @JsonView(View.Admin.class)
   public void delete(@PathVariable String tenantId) {
     tenantManagement.removeTenantMetadata(tenantId);
   }
