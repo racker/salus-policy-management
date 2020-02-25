@@ -28,6 +28,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import com.rackspace.salus.policy.manage.TestUtility;
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.entities.Monitor;
@@ -52,6 +53,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -142,7 +144,7 @@ public class MonitorPolicyManagementTest {
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    Monitor monitor = createPolicyMonitor();
+    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
 
     // Store a default tenant in the db for that account type
     tenantMetadataRepository.save(new TenantMetadata()
@@ -177,8 +179,8 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testCreateMonitorPolicy_multipleTenants() {
-    List<String> tenantIds = createMultipleTenants();
-    Monitor monitor = createPolicyMonitor();
+    List<String> tenantIds = TestUtility.createMultipleTenants(resourceRepository);
+    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
@@ -242,7 +244,7 @@ public class MonitorPolicyManagementTest {
    */
   @Test
   public void testPolicyEvent_monitorExistsAfterCreate() {
-    Monitor monitor = createPolicyMonitor();
+    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
 
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);
@@ -380,7 +382,7 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testRemoveMonitorPolicy() {
-    String tenantId = createSingleTenant();
+    String tenantId = TestUtility.createSingleTenant(resourceRepository);
 
     // Create a policy to remove
     MonitorPolicy saved = (MonitorPolicy) policyRepository.save(new MonitorPolicy()
@@ -417,33 +419,12 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testGetAllDistinctTenants() {
-    final List<Resource> resources = podamFactory.manufacturePojo(ArrayList.class, Resource.class);
-    resourceRepository.saveAll(resources);
-
-    List<String> expectedIds = resources.stream().map(Resource::getTenantId).collect(Collectors.toList());
+    List<String>expectedIds = TestUtility.createMultipleTenants(resourceRepository);
 
     List<String> tenantIds = policyManagement.getAllDistinctTenantIds();
 
     assertThat(tenantIds, notNullValue());
     assertThat(tenantIds, hasSize(expectedIds.size()));
     assertThat(tenantIds, containsInAnyOrder(expectedIds.toArray()));
-  }
-
-  private Monitor createPolicyMonitor() {
-    Monitor monitor = podamFactory.manufacturePojo(Monitor.class);
-    monitor.setTenantId(Monitor.POLICY_TENANT);
-    return monitorRepository.save(monitor);
-  }
-
-  private String createSingleTenant() {
-    Resource resource = podamFactory.manufacturePojo(Resource.class);
-    return resourceRepository.save(resource).getTenantId();
-  }
-
-  private List<String> createMultipleTenants() {
-    List<Resource> resources = podamFactory.manufacturePojo(ArrayList.class, Resource.class);
-    return StreamSupport.stream(resourceRepository.saveAll(resources).spliterator(), false)
-        .map(Resource::getTenantId)
-        .collect(Collectors.toList());
   }
 }
