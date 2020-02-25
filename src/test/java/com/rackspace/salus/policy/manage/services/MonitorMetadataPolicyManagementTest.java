@@ -32,12 +32,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.rackspace.salus.policy.manage.TestUtility;
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
-import com.rackspace.salus.telemetry.entities.Resource;
+import com.rackspace.salus.policy.manage.services.MonitorPolicyManagementTest.*;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MetadataPolicyEvent;
@@ -198,7 +199,7 @@ public class MonitorMetadataPolicyManagementTest {
 
   @Test
   public void testCreateMetadataPolicy_multipleTenants() {
-    List<String> tenantIds = createMultipleTenants("metadataKey");
+    List<String> tenantIds = TestUtility.createMultipleTenants(resourceRepository);
 
     MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
         .setMonitorType(MonitorType.ssl)
@@ -474,7 +475,7 @@ public class MonitorMetadataPolicyManagementTest {
 
   @Test
   public void testRemoveMetadataPolicy() {
-    String tenantId = createSingleTenant();
+    String tenantId = TestUtility.createSingleTenant(resourceRepository);
 
     // Create a policy to remove
     MetadataPolicy saved = (MetadataPolicy) policyRepository.save(new MonitorMetadataPolicy()
@@ -516,19 +517,6 @@ public class MonitorMetadataPolicyManagementTest {
         .hasMessage(
             String.format("No policy found with id %s", id)
         );
-  }
-
-  private String createSingleTenant() {
-    Resource resource = podamFactory.manufacturePojo(Resource.class);
-    return resourceRepository.save(resource).getTenantId();
-  }
-
-  private List<String> createMultipleTenants(String metadataKey) {
-    // update this to create tenants that use the parameter
-    List<Resource> resources = podamFactory.manufacturePojo(ArrayList.class, Resource.class);
-    return StreamSupport.stream(resourceRepository.saveAll(resources).spliterator(), false)
-        .map(Resource::getTenantId)
-        .collect(Collectors.toList());
   }
 
   private void mockGetTenantsUsingPolicyKey(List<String> tenantIds) {
