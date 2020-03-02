@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
@@ -55,7 +56,10 @@ import org.springframework.web.util.UriComponentsBuilder;
     }
   }
  * </pre>
- *
+ * <p>
+ *   This component declares the option to cache the results of each operation. To enable caching
+ *   <code>&#64;Import</code> {@link PolicyApiCacheConfig} on a config bean declaring the client bean.
+ * </p>
  */
 public class PolicyApiClient implements PolicyApi {
   private static final ParameterizedTypeReference<List<MonitorPolicyDTO>> LIST_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
@@ -68,6 +72,7 @@ public class PolicyApiClient implements PolicyApi {
     this.restTemplate = restTemplate;
   }
 
+  @Cacheable("policymgmt_monitor_policies")
   public List<MonitorPolicyDTO> getEffectiveMonitorPolicies(String tenantId) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}")
@@ -82,6 +87,7 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
+  @Cacheable("policymgmt_policy_monitor_ids")
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/ids")
@@ -96,6 +102,7 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
+  @Cacheable("policymgmt_monitor_metadata_policies")
   public List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}")
@@ -110,6 +117,7 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
+  @Cacheable("policymgmt_monitor_metadata_map")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(String tenantId, TargetClassName className, MonitorType monitorType) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
