@@ -69,9 +69,9 @@ public class PolicyApiClient implements PolicyApi {
   }
 
   @CacheEvict(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
-      condition = "#useCache != null && !#useCache", beforeInvocation = true)
+      condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
-      condition = "#useCache == null || #useCache")
+      condition = "#useCache")
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/ids")
@@ -87,9 +87,9 @@ public class PolicyApiClient implements PolicyApi {
   }
 
   @CacheEvict(cacheNames = "policymgmt_monitor_metadata_policies", key = "#tenantId",
-      condition = "#useCache != null && !#useCache", beforeInvocation = true)
+      condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = "policymgmt_monitor_metadata_policies", key = "#tenantId",
-      condition = "#useCache == null || #useCache")
+      condition = "#useCache")
   public List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(
       String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
@@ -106,9 +106,9 @@ public class PolicyApiClient implements PolicyApi {
   }
 
   @CacheEvict(cacheNames = "policymgmt_monitor_metadata_map", key = "{#tenantId, #className, #monitorType}",
-      condition = "#useCache != null && !#useCache", beforeInvocation = true)
+      condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = "policymgmt_monitor_metadata_map", key = "{#tenantId, #className, #monitorType}",
-      condition = "#useCache == null || #useCache")
+      condition = "#useCache")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
     final String uri = UriComponentsBuilder
