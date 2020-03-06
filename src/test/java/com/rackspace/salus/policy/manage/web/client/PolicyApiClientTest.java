@@ -31,10 +31,13 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.cache.CacheType;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
@@ -42,14 +45,21 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 
+/**
+ * Since caching is duplicated across all endpoints, only getEffectiveMonitorMetadataMap
+ * is tested here.  Those tests infer the others will also work (as long as the @Cacheable
+ * config was duplicated correctly)
+ */
 @RunWith(SpringRunner.class)
 @RestClientTest
+@AutoConfigureCache(cacheProvider = CacheType.JCACHE)
 public class PolicyApiClientTest {
 
   @TestConfiguration
+  @Import(PolicyApiCacheConfig.class)
   public static class ExtraTestConfig {
     @Bean
-    public PolicyApiClient policyApiClient(RestTemplateBuilder restTemplateBuilder) {
+    public PolicyApi policyApiClient(RestTemplateBuilder restTemplateBuilder) {
       return new PolicyApiClient(restTemplateBuilder.build());
     }
   }
@@ -57,10 +67,15 @@ public class PolicyApiClientTest {
   MockRestServiceServer mockServer;
 
   @Autowired
-  PolicyApiClient policyApiClient;
+  PolicyApi policyApiClient;
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
+  /**
+   * Tests the same request multiple times with the cache enabled.
+   *
+   * @throws JsonProcessingException
+   */
   @Test
   public void testGetEffectiveMonitorMetadataMapWithCache() throws JsonProcessingException {
     Map<String, MonitorMetadataPolicyDTO> expectedPolicy = Map.of(
@@ -87,11 +102,134 @@ public class PolicyApiClientTest {
 
     assertThat(policies, equalTo(expectedPolicy));
 
-    // running the same request again should trigger bypass the cache and perform a full request
+    // running the same request again should return the same result from the cache
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
         tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
 
     assertThat(policies, equalTo(expectedPolicy));
+    mockServer.verify();
+  }
+
+  /**
+   * Tests the same request multiple times with the cache disabled.
+   *
+   * @throws JsonProcessingException
+   */
+  @Test
+  public void testGetEffectiveMonitorMetadataMapNoCache() throws JsonProcessingException {
+    Map<String, MonitorMetadataPolicyDTO> expectedPolicy = Map.of(
+        "count", (MonitorMetadataPolicyDTO) new MonitorMetadataPolicyDTO()
+            .setKey("count")
+            .setValueType(MetadataValueType.INT)
+            .setValue("63"),
+        "pingInterval", (MonitorMetadataPolicyDTO) new MonitorMetadataPolicyDTO()
+            .setKey("pingInterval")
+            .setValueType(MetadataValueType.DURATION)
+            .setValue("PT2S"));
+
+    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+
+    mockServer.expect(ExpectedCount.twice(),
+        requestTo(String.format(
+            "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
+        .andRespond(withSuccess(
+            objectMapper.writeValueAsString(expectedPolicy), MediaType.APPLICATION_JSON
+        ));
+
+    Map<String, MonitorMetadataPolicyDTO> policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+
+    assertThat(policies, equalTo(expectedPolicy));
+
+    // running the same request again should bypass the cache and perform a full request
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+
+    assertThat(policies, equalTo(expectedPolicy));
+
+    assertThat(policies, equalTo(expectedPolicy));
+    mockServer.verify();
+  }
+
+  /**
+   * Tests a request for ping metadata multiple times with a mixture of cache settings.
+   * Then tests requests for http metadata to verify it does not reuse the same cache entry created
+   * by the ping requests.
+   *
+   * @throws JsonProcessingException
+   */
+  @Test
+  public void testGetEffectiveMonitorMetadataMapMultiRequest() throws JsonProcessingException {
+    Map<String, MonitorMetadataPolicyDTO> expectedPingPolicy = Map.of(
+        "count", (MonitorMetadataPolicyDTO) new MonitorMetadataPolicyDTO()
+            .setKey("count")
+            .setValueType(MetadataValueType.INT)
+            .setValue("63"),
+        "pingInterval", (MonitorMetadataPolicyDTO) new MonitorMetadataPolicyDTO()
+            .setKey("pingInterval")
+            .setValueType(MetadataValueType.DURATION)
+            .setValue("PT2S"));
+
+    Map<String, MonitorMetadataPolicyDTO> expectedHttpPolicy = Map.of(
+        "timeout", (MonitorMetadataPolicyDTO) new MonitorMetadataPolicyDTO()
+            .setKey("timeout")
+            .setValueType(MetadataValueType.DURATION)
+            .setValue("PT1M"));
+
+    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+
+    // only one of the three requests will hit the cache
+    mockServer.expect(ExpectedCount.twice(),
+        requestTo(String.format(
+            "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
+        .andRespond(withSuccess(
+            objectMapper.writeValueAsString(expectedPingPolicy), MediaType.APPLICATION_JSON
+        ));
+
+    // first request will populate the cache
+    Map<String, MonitorMetadataPolicyDTO> policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+
+    assertThat(policies, equalTo(expectedPingPolicy));
+
+    // make the same request using the cache
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+
+    assertThat(policies, equalTo(expectedPingPolicy));
+
+    // make the same request bypassing the cache
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+
+    assertThat(policies, equalTo(expectedPingPolicy));
+
+    mockServer.verify();
+    mockServer.reset(); // allows us to set a new `expect`
+
+    // same request with a different monitor type should not query the existing cache
+    // all but the first request will hit the cache
+    mockServer.expect(ExpectedCount.once(),
+        requestTo(String.format(
+            "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/http", tenantId)))
+        .andRespond(withSuccess(
+            objectMapper.writeValueAsString(expectedHttpPolicy), MediaType.APPLICATION_JSON
+        ));
+
+    // Run the request for a different monitor type 3 times using the cache
+    // the same result will be returned each time
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+    assertThat(policies, equalTo(expectedHttpPolicy));
+
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+    assertThat(policies, equalTo(expectedHttpPolicy));
+
+    policies = policyApiClient.getEffectiveMonitorMetadataMap(
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+    assertThat(policies, equalTo(expectedHttpPolicy));
+
     mockServer.verify();
   }
 
