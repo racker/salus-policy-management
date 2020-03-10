@@ -146,8 +146,6 @@ public class PolicyApiClientTest {
         tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
 
     assertThat(policies, equalTo(expectedPolicy));
-
-    assertThat(policies, equalTo(expectedPolicy));
     mockServer.verify();
   }
 
