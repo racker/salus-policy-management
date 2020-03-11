@@ -16,9 +16,7 @@
 
 package com.rackspace.salus.policy.manage.web.client;
 
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
-import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
@@ -32,8 +30,8 @@ import java.util.UUID;
  * @see PolicyApiClient
  */
 public interface PolicyApi {
-  List<MonitorPolicyDTO> getEffectiveMonitorPolicies(String tenantId);
-  List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId);
-  List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId);
-  Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(String tenantId, TargetClassName className, MonitorType monitorType);
+  List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache);
+  List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId, boolean useCache);
+  Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
+      String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache);
 }
