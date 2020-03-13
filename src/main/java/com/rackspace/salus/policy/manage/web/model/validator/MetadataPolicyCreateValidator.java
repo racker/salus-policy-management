@@ -18,7 +18,6 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import javax.validation.ConstraintValidatorContext;
 import org.apache.commons.lang3.StringUtils;
 
 public class MetadataPolicyCreateValidator extends PolicyValidator<MetadataPolicyCreate> {

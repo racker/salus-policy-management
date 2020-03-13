@@ -1,10 +1,9 @@
 package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.List;
 
 public class MetadataPolicyUpdateValidator extends ValueTypeValidator<MetadataPolicyUpdate> {
 
@@ -25,11 +24,10 @@ public class MetadataPolicyUpdateValidator extends ValueTypeValidator<MetadataPo
           Duration.parse(policy.getValue());
           break;
         case BOOL:
-          // some string that is not a boolean still succeeds with false
           Boolean.parseBoolean(policy.getValue());
           break;
         default:
-          //log.warn("Failed to handle policy with valueType={}", policy.getValueType());
+          throw new ParseException(String.format("Unable to parse %s as unknown type", policy.getValue()), 0);
       }
     } catch(Exception e) {
       return false;
