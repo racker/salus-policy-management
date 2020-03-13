@@ -6,19 +6,16 @@ import static org.junit.Assert.assertThat;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
-import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.Set;
-import java.util.UUID;
 import javax.validation.ConstraintViolation;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-public class ValidValueTypePolicyTest {
+public class ValidPolicyValueTypePolicyTest {
   private LocalValidatorFactoryBean validatorFactoryBean;
 
   @Before
@@ -26,15 +23,6 @@ public class ValidValueTypePolicyTest {
     validatorFactoryBean = new LocalValidatorFactoryBean();
     validatorFactoryBean.afterPropertiesSet();
   }
-
-
-  /*
-  test DURATION
-  BOOL
-  STRING
-  STRING_LIST
-  INT
-   */
 
   @Test
   public void testDurationType() {

@@ -3,10 +3,10 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public abstract class ValueTypeValidator<T> implements ConstraintValidator<ValidValueType, T> {
+public abstract class ValueTypeValidator<T> implements ConstraintValidator<ValidPolicyValueType, T> {
 
   @Override
-  public void initialize(ValidValueType constraint) {
+  public void initialize(ValidPolicyValueType constraint) {
 
   }
 

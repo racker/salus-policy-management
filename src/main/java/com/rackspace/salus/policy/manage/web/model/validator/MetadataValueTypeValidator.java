@@ -1,7 +1,6 @@
 package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
-import java.text.ParseException;
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -27,7 +26,7 @@ public class MetadataValueTypeValidator extends ValueTypeValidator<MetadataPolic
           Boolean.parseBoolean(policy.getValue());
           break;
         default:
-          throw new ParseException(String.format("Unable to parse %s as unknown type", policy.getValue()), 0);
+          throw new IllegalArgumentException(String.format("Unable to parse %s as unknown type", policy.getValue()));
       }
     } catch(Exception e) {
       return false;
