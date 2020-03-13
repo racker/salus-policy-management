@@ -17,13 +17,13 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidValueTypeValidator;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import lombok.Data;
 
 @Data
 @ValidNewPolicy
-@ValidValueTypeValidator
+@ValidValueType
 public class MonitorMetadataPolicyCreate extends MetadataPolicyCreate {
   MonitorType monitorType;
 }

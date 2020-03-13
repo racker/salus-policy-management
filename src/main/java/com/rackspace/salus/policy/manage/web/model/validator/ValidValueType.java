@@ -12,7 +12,7 @@ import javax.validation.Payload;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Constraint(validatedBy={MetadataValueTypeValidator.class, MetadataPolicyUpdateValidator.class})
-public @interface ValidValueTypeValidator {
+public @interface ValidValueType {
   String message() default "Unable to deserialize type";
 
   Class<?>[] groups() default {};

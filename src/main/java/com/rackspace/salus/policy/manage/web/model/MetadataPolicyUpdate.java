@@ -16,14 +16,14 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.policy.manage.web.model.validator.ValidValueTypeValidator;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidValueType;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
 import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-@ValidValueTypeValidator(message="Unable to deserialize '${validatedValue.value}' as '${validatedValue.valueType}'")
+@ValidValueType(message="Unable to deserialize '${validatedValue.value}' as '${validatedValue.valueType}'")
 public class MetadataPolicyUpdate implements Serializable {
 
   MetadataValueType valueType;
