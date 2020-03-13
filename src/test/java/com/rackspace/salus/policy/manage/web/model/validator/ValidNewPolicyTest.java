@@ -30,7 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-public class ValidPolicyTest {
+public class ValidNewPolicyTest {
 
   private LocalValidatorFactoryBean validatorFactoryBean;
 
@@ -96,5 +96,4 @@ public class ValidPolicyTest {
     assertThat(violation.getMessage(),
         equalTo("subscope must be set for any non-global policy but not for global policies"));
   }
-
 }

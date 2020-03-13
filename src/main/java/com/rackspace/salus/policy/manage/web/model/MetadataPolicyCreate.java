@@ -16,7 +16,8 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidValueTypeValidator;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
@@ -26,7 +27,8 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-@ValidPolicy
+@ValidNewPolicy
+@ValidValueTypeValidator(message="Unable to deserialize '${validatedValue.value}' as '${validatedValue.valueType}'")
 public class MetadataPolicyCreate implements Serializable {
 
   @NotNull

@@ -20,9 +20,10 @@ import com.rackspace.salus.telemetry.model.PolicyScope;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public abstract class PolicyValidator<T> implements ConstraintValidator<ValidPolicy, T> {
+public abstract class PolicyValidator<T> implements ConstraintValidator<ValidNewPolicy, T> {
+
   @Override
-  public void initialize(ValidPolicy constraint) { }
+  public void initialize(ValidNewPolicy constraint) { }
 
   @Override
   public boolean isValid(T value, ConstraintValidatorContext context) {
