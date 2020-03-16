@@ -155,28 +155,32 @@ public class ValidPolicyValueTypePolicyTest {
   }
 
   @Test
-  public void testBooleanTypeAlsoDoesntFail() {
+  public void testBooleanTypeFails() {
     MetadataPolicyCreate policyCreate = new MetadataPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
         .setTargetClassName(TargetClassName.LocalPlugin)
         .setValueType(MetadataValueType.BOOL)
         .setKey("keyValue")
-        .setValue("not a boolean value");
+        .setValue("not a boolean");
 
     final Set<ConstraintViolation<MetadataPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
-    assertThat(errors, hasSize(0));
+    assertThat(errors, hasSize(1));
+    final ConstraintViolation<MetadataPolicyCreate> violation = errors.iterator().next();
+    assertThat(violation.getMessage(), equalTo("Unable to deserialize 'not a boolean' as 'BOOL'"));
   }
 
   @Test
-  public void testBooleanTypeAlsoDoesntFailOnUpdate() {
+  public void testBooleanTypeFailOnUpdate() {
     MetadataPolicyUpdate policyUpdate = new MetadataPolicyUpdate()
         .setValueType(MetadataValueType.BOOL)
-        .setValue("not a boolean value");
+        .setValue("not a boolean");
 
     final Set<ConstraintViolation<MetadataPolicyUpdate>> errors = validatorFactoryBean.validate(policyUpdate);
 
-    assertThat(errors, hasSize(0));
+    assertThat(errors, hasSize(1));
+    final ConstraintViolation<MetadataPolicyUpdate> violation = errors.iterator().next();
+    assertThat(violation.getMessage(), equalTo("Unable to deserialize 'not a boolean' as 'BOOL'"));
   }
 
   @Test

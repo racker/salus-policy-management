@@ -28,9 +28,9 @@ import javax.validation.Payload;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Constraint(validatedBy={MetadataValueTypeValidator.class, MetadataPolicyUpdateValidator.class})
+@Constraint(validatedBy={MetadataCreateValueTypeValidator.class, MetadataUpdateValueTypeValidator.class})
 public @interface ValidPolicyValueType {
-  String message() default "Unable to deserialize '${validatedValue.value}' as '${validatedValue.valueType}";
+  String message() default "Unable to deserialize '${validatedValue.value}' as '${validatedValue.valueType}'";
 
   Class<?>[] groups() default {};
 

@@ -17,21 +17,20 @@
 
 package com.rackspace.salus.policy.manage.web.model.validator;
 
+import com.rackspace.salus.common.util.BooleanParser;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import java.time.Duration;
 import java.util.Arrays;
 
-public class MetadataPolicyUpdateValidator extends ValueTypeValidator<MetadataPolicyUpdate> {
+public class MetadataUpdateValueTypeValidator extends ValueTypeValidator<MetadataPolicyUpdate> {
 
   @Override
   protected boolean validateValueType(MetadataPolicyUpdate policy) {
     try {
       switch (policy.getValueType()) {
         case STRING:
-          policy.getValue();
           break;
         case STRING_LIST:
-          Arrays.asList(policy.getValue().split("\\s*,\\s*"));
           break;
         case INT:
           Integer.parseInt(policy.getValue());
@@ -40,7 +39,7 @@ public class MetadataPolicyUpdateValidator extends ValueTypeValidator<MetadataPo
           Duration.parse(policy.getValue());
           break;
         case BOOL:
-          Boolean.parseBoolean(policy.getValue());
+          BooleanParser.parseBoolean(policy.getValue());
           break;
         default:
           throw new IllegalArgumentException(String.format("Unable to parse %s as unknown type", policy.getValue()));
