@@ -17,10 +17,9 @@
 
 package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.common.util.BooleanParser;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import java.time.Duration;
-import java.util.Arrays;
+import org.apache.commons.lang3.BooleanUtils;
 
 public class MetadataUpdateValueTypeValidator extends ValueTypeValidator<MetadataPolicyUpdate> {
 
@@ -39,7 +38,7 @@ public class MetadataUpdateValueTypeValidator extends ValueTypeValidator<Metadat
           Duration.parse(policy.getValue());
           break;
         case BOOL:
-          BooleanParser.parseBoolean(policy.getValue());
+          BooleanUtils.toBoolean(policy.getValue().toLowerCase(), "true", "false");
           break;
         default:
           throw new IllegalArgumentException(String.format("Unable to parse %s as unknown type", policy.getValue()));
