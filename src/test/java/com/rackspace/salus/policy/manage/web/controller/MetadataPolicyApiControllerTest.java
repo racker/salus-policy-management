@@ -179,6 +179,7 @@ public class MetadataPolicyApiControllerTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setTargetClassName(TargetClassName.Monitor)
+        .setValueType(MetadataValueType.STRING)
         .setKey(RandomStringUtils.randomAlphabetic(10))
         .setValue(RandomStringUtils.randomAlphabetic(10));
 
@@ -215,6 +216,7 @@ public class MetadataPolicyApiControllerTest {
 
     // All we need is a valid update object; doesn't matter what values are set.
     MetadataPolicyUpdate policyUpdate = new MetadataPolicyUpdate()
+        .setValueType(MetadataValueType.STRING)
         .setValue(RandomStringUtils.randomAlphabetic(10));
 
     UUID id = UUID.randomUUID();
