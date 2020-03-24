@@ -17,10 +17,8 @@
 
 package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.common.util.BooleanParser;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyCreate;
 import java.time.Duration;
-import java.util.Arrays;
 import org.apache.commons.lang3.BooleanUtils;
 
 public class MetadataCreateValueTypeValidator extends ValueTypeValidator<MetadataPolicyCreate> {
