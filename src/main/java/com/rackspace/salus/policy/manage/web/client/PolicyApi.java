@@ -30,6 +30,7 @@ import java.util.UUID;
  * @see PolicyApiClient
  */
 public interface PolicyApi {
+  List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean useCache);
   List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache);
   List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId, boolean useCache);
   Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(

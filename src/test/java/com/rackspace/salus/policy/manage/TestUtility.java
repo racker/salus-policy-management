@@ -44,7 +44,11 @@ public class TestUtility {
   }
 
   public static List<String> createMultipleTenants(ResourceRepository resourceRepository) {
-    return IntStream.range(0, 5)
+    return createMultipleTenants(resourceRepository, 5);
+  }
+
+  public static List<String> createMultipleTenants(ResourceRepository resourceRepository, int count) {
+    return IntStream.range(0, count)
         .mapToObj(i -> createSingleTenant(resourceRepository))
         .collect(Collectors.toList());
   }

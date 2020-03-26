@@ -17,27 +17,16 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
 import java.io.Serializable;
-import java.util.UUID;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.validator.constraints.NotBlank;
 
 /**
- * This Object is used for handling the creation of Monitor Policies.
+ * This Object is used for handling the updating of Monitor Policies.
  */
 @Data
-@ValidPolicy
-public class MonitorPolicyCreate implements Serializable {
-  @NotNull
+public class MonitorPolicyUpdate implements Serializable {
+
   PolicyScope scope;
 
   String subscope;
-
-  @NotBlank
-  String name;
-
-  @NotNull
-  UUID monitorId;
 }

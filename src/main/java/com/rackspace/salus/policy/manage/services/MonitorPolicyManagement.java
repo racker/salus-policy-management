@@ -16,18 +16,23 @@
 
 package com.rackspace.salus.policy.manage.services;
 
-import com.rackspace.salus.telemetry.entities.Monitor;
-import com.rackspace.salus.telemetry.messaging.PolicyMonitorUpdateEvent;
-import com.rackspace.salus.telemetry.entities.MonitorPolicy;
-import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
-import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
+import com.rackspace.salus.telemetry.entities.Monitor;
+import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
+import com.rackspace.salus.telemetry.repositories.MonitorRepository;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -91,6 +96,28 @@ public class MonitorPolicyManagement {
     return policy;
   }
 
+  public MonitorPolicy updateMonitorPolicy(UUID policyId, MonitorPolicyUpdate update) {
+    MonitorPolicy policy = getMonitorPolicy(policyId).orElseThrow(() ->
+        new NotFoundException(String.format("No policy found for %s", policyId)));
+
+    PolicyScope scope = update.getScope() != null ? update.getScope() : policy.getScope();
+    String subscope = update.getSubscope() != null ? update.getSubscope() : policy.getSubscope();
+    validateScope(scope, subscope);
+
+    Set<String> originalTenants = new HashSet<>(policyManagement.getTenantsForPolicy(policy));
+
+    policy.setScope(scope);
+    policy.setSubscope(subscope);
+
+    Set<String> allUniqueTenants = new HashSet<>(policyManagement.getTenantsForPolicy(policy));
+    allUniqueTenants.addAll(originalTenants);
+
+    monitorPolicyRepository.save(policy);
+    sendMonitorPolicyEventsForTenants(policy, allUniqueTenants);
+
+    return policy;
+  }
+
   /**
    * Gets the full policy details with the provided id.
    * @param id The id of the policy to retrieve.
@@ -104,6 +131,13 @@ public class MonitorPolicyManagement {
     return getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream()
         .map(MonitorPolicy::getMonitorId)
+        .collect(Collectors.toList());
+  }
+
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId) {
+    return getEffectiveMonitorPoliciesForTenant(tenantId)
+        .stream()
+        .map(MonitorPolicy::getId)
         .collect(Collectors.toList());
   }
 
@@ -185,9 +219,12 @@ public class MonitorPolicyManagement {
    * @param policy The MonitorPolicy to distribute out to all tenants.
    */
   private void sendMonitorPolicyEvents(MonitorPolicy policy) {
-    log.info("Sending monitor policy events for {}", policy);
-
     List<String> tenantIds = policyManagement.getTenantsForPolicy(policy);
+    sendMonitorPolicyEventsForTenants(policy, tenantIds);
+  }
+
+  private void sendMonitorPolicyEventsForTenants(MonitorPolicy policy, Collection<String> tenantIds) {
+    log.info("Sending {} monitor policy events for {}", tenantIds.size(), policy);
 
     tenantIds.stream()
         .map(tenantId -> new MonitorPolicyEvent()
@@ -197,20 +234,16 @@ public class MonitorPolicyManagement {
         .forEach(policyEventProducer::sendPolicyEvent);
   }
 
-  void handlePolicyMonitorUpdate(UUID monitorId) {
-    Optional<MonitorPolicy> policy = monitorPolicyRepository.findByMonitorId(monitorId);
-    if (policy.isEmpty()) {
-      log.warn("Ignoring policy monitor update for monitor={}, monitor not used in policy", monitorId);
-      return;
+  /**
+   * Verifies the scope values provided are allowed.
+   * @param scope The scope of the policy.
+   * @param subscope The subscope of the policy.
+   * @throws IllegalArgumentException If an invalid combination of the two fields is used.
+   */
+  private void validateScope(PolicyScope scope, String subscope) throws IllegalArgumentException {
+    if ((scope.equals(PolicyScope.GLOBAL) && subscope != null) ||
+        (!scope.equals(PolicyScope.GLOBAL) && subscope == null)) {
+      throw new IllegalArgumentException(ValidPolicy.DEFAULT_MESSAGE);
     }
-    log.info("Sending policy monitor update events for {}", policy.get());
-
-    List<String> tenantIds = policyManagement.getTenantsForPolicy(policy.get());
-
-    tenantIds.stream()
-        .map(tenantId -> new PolicyMonitorUpdateEvent()
-            .setTenantId(tenantId)
-            .setMonitorId(monitorId))
-        .forEach(policyEventProducer::sendPolicyMonitorUpdateEvent);
   }
 }

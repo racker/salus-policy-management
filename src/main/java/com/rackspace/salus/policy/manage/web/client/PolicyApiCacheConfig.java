@@ -47,6 +47,7 @@ public class PolicyApiCacheConfig {
   public JCacheManagerCustomizer policyManagementCacheCustomizer() {
     return cacheManager -> {
       cacheManager.createCache("policymgmt_monitor_policies", policiesCacheConfig());
+      cacheManager.createCache("policymgmt_monitor_policy_ids", policiesCacheConfig());
       cacheManager.createCache("policymgmt_policy_monitor_ids", policiesCacheConfig());
       cacheManager.createCache("policymgmt_monitor_metadata_policies", metadataCacheConfig());
       cacheManager.createCache("policymgmt_monitor_metadata_map", metadataCacheConfig());

@@ -68,13 +68,31 @@ public class PolicyApiClient implements PolicyApi {
     this.restTemplate = restTemplate;
   }
 
+  @CacheEvict(cacheNames = "policymgmt_monitor_policy_ids", key = "#tenantId",
+      condition = "!#useCache", beforeInvocation = true)
+  @Cacheable(cacheNames = "policymgmt_monitor_policy_ids", key = "#tenantId",
+      condition = "#useCache")
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/policy-ids")
+        .build(tenantId)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_UUID
+    ).getBody();
+  }
+
   @CacheEvict(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
       condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
       condition = "#useCache")
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
-        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/ids")
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/monitor-ids")
         .build(tenantId)
         .toString();
 
