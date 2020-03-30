@@ -18,7 +18,7 @@ package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
 import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -248,7 +248,7 @@ public class MonitorPolicyManagement {
   private void validateScope(PolicyScope scope, String subscope) throws IllegalArgumentException {
     if ((scope.equals(PolicyScope.GLOBAL) && subscope != null) ||
         (!scope.equals(PolicyScope.GLOBAL) && subscope == null)) {
-      throw new IllegalArgumentException(ValidPolicy.DEFAULT_MESSAGE);
+      throw new IllegalArgumentException(ValidNewPolicy.DEFAULT_MESSAGE);
     }
   }
 }
