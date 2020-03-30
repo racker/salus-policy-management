@@ -17,7 +17,7 @@
 package com.rackspace.salus.policy.manage.web.model;
 
 import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidPolicy;
+import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
 import java.io.Serializable;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
@@ -28,7 +28,7 @@ import org.hibernate.validator.constraints.NotBlank;
  * This Object is used for handling the creation of Monitor Policies.
  */
 @Data
-@ValidPolicy
+@ValidNewPolicy
 public class MonitorPolicyCreate implements Serializable {
   @NotNull
   PolicyScope scope;

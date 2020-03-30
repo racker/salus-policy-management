@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rackspace US, Inc.
+ * Copyright 2020 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,28 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.rackspace.salus.policy.manage.web.model.validator;
 
-import com.rackspace.salus.telemetry.model.PolicyScope;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public abstract class PolicyValidator<T> implements ConstraintValidator<ValidNewPolicy, T> {
+public abstract class ValueTypeValidator<T> implements ConstraintValidator<ValidPolicyValueType, T> {
 
   @Override
-  public void initialize(ValidNewPolicy constraint) { }
+  public void initialize(ValidPolicyValueType constraint) {
 
-  @Override
-  public boolean isValid(T value, ConstraintValidatorContext context) {
-    return
-        // true if scope is global and subset is not set
-        (getScope(value).equals(PolicyScope.GLOBAL) && !isSubscopeSet(value)) ||
-            // or true if scope is not global and subset is set
-            (!getScope(value).equals(PolicyScope.GLOBAL) && isSubscopeSet(value));
   }
 
-  protected abstract PolicyScope getScope(T value);
-  protected abstract boolean isSubscopeSet(T value);
+  @Override
+  public boolean isValid(T policy, ConstraintValidatorContext constraintValidatorContext) {
+
+    return validateValueType(policy);
+  }
+
+  protected abstract boolean validateValueType(T value);
 }
