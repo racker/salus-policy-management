@@ -109,11 +109,12 @@ public class MonitorPolicyManagement {
     policy.setScope(scope);
     policy.setSubscope(subscope);
 
-    Set<String> allUniqueTenants = new HashSet<>(policyManagement.getTenantsForPolicy(policy));
-    allUniqueTenants.addAll(originalTenants);
+    // gets the tenants for the updated policy and then creates a union with the original tenants
+    Set<String> allRelevantTenants = new HashSet<>(policyManagement.getTenantsForPolicy(policy));
+    allRelevantTenants.addAll(originalTenants);
 
     monitorPolicyRepository.save(policy);
-    sendMonitorPolicyEventsForTenants(policy, allUniqueTenants);
+    sendMonitorPolicyEventsForTenants(policy, allRelevantTenants);
 
     return policy;
   }
@@ -236,6 +237,10 @@ public class MonitorPolicyManagement {
 
   /**
    * Verifies the scope values provided are allowed.
+   *
+   * A global scope cannot have a subscope (by design global means it affects all tenants).
+   * A non-global scope must have a subscope specified to identify the subset of accounts impacted.
+   *
    * @param scope The scope of the policy.
    * @param subscope The subscope of the policy.
    * @throws IllegalArgumentException If an invalid combination of the two fields is used.
