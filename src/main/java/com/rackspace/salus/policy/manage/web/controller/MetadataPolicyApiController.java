@@ -20,6 +20,7 @@ import com.rackspace.salus.policy.manage.services.MonitorMetadataPolicyManagemen
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.web.model.ZoneMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PagedContent;
@@ -99,6 +100,13 @@ public class MetadataPolicyApiController {
         .map(MonitorMetadataPolicyDTO::new));
   }
 
+  @GetMapping("/admin/policy/metadata/zones/{region}")
+  @ApiOperation(value = "Gets default monitoring zones for a region")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Zones Retrieved")})
+  public List<String> getDefaultMonitoringZones(@PathVariable String region) {
+    return monitorMetadataPolicyManagement.getDefaultMonitoringZones(region);
+  }
+
   @PostMapping("/admin/policy/metadata/monitor")
   @ResponseStatus(HttpStatus.CREATED)
   @ApiOperation(value = "Creates new monitor metadata Policy")
@@ -106,6 +114,15 @@ public class MetadataPolicyApiController {
   public MonitorMetadataPolicyDTO createMonitorMetadata(@Valid @RequestBody final MonitorMetadataPolicyCreate input)
       throws IllegalArgumentException {
     return new MonitorMetadataPolicyDTO(monitorMetadataPolicyManagement.createMetadataPolicy(input));
+  }
+
+  @PostMapping("/admin/policy/metadata/zones")
+  @ResponseStatus(HttpStatus.CREATED)
+  @ApiOperation(value = "Creates new zone metadata Policy")
+  @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully Created Metadata Policy")})
+  public MonitorMetadataPolicyDTO createZoneMetadata(@Valid @RequestBody final ZoneMetadataPolicyCreate input)
+      throws IllegalArgumentException {
+    return new MonitorMetadataPolicyDTO(monitorMetadataPolicyManagement.createZonePolicy(input));
   }
 
   @PutMapping("/admin/policy/metadata/monitor/{uuid}")
