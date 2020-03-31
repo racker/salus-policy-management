@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -31,10 +32,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import com.rackspace.salus.policy.manage.TestUtility;
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
 import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
-import com.rackspace.salus.telemetry.entities.Resource;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MonitorPolicyEvent;
@@ -51,10 +52,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
@@ -237,6 +237,33 @@ public class MonitorPolicyManagementTest {
             String.format("Invalid monitor id provided: %s",
                 policyCreate.getMonitorId())
         );
+  }
+
+  @Test
+  public void testUpdateMonitorPolicy() {
+    List<String> tenantsOnNewPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
+    List<String> tenantsOnOriginalPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
+    List<String> tenantsOnIrrelevantPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
+
+    MonitorPolicy originalPolicy = createAccountTypePolicy();
+    String newSubscope = RandomStringUtils.randomAlphabetic(10);
+
+    createTenantsOfAccountType(tenantsOnNewPolicy, newSubscope);
+    createTenantsOfAccountType(tenantsOnOriginalPolicy, originalPolicy.getSubscope());
+    createTenantsOfAccountType(tenantsOnIrrelevantPolicy, "irrelevantAccounts");
+
+    MonitorPolicyUpdate update = new MonitorPolicyUpdate()
+        .setScope(PolicyScope.ACCOUNT_TYPE)
+        .setSubscope(newSubscope);
+
+    MonitorPolicy updatedPolicy = monitorPolicyManagement.updateMonitorPolicy(originalPolicy.getId(), update);
+
+    assertThat(updatedPolicy.getScope(), equalTo(update.getScope()));
+    assertThat(updatedPolicy.getSubscope(), equalTo(update.getSubscope()));
+    assertThat(updatedPolicy.getMonitorId(), equalTo(originalPolicy.getMonitorId()));
+
+    verify(policyEventProducer, times(tenantsOnNewPolicy.size() + tenantsOnOriginalPolicy.size()))
+        .sendPolicyEvent(any());
   }
 
   /**
@@ -426,5 +453,22 @@ public class MonitorPolicyManagementTest {
     assertThat(tenantIds, notNullValue());
     assertThat(tenantIds, hasSize(expectedIds.size()));
     assertThat(tenantIds, containsInAnyOrder(expectedIds.toArray()));
+  }
+
+  private MonitorPolicy createAccountTypePolicy() {
+    return monitorPolicyRepository.save((MonitorPolicy) new MonitorPolicy()
+        .setName(RandomStringUtils.randomAlphabetic(5))
+        .setMonitorId(UUID.randomUUID())
+        .setScope(PolicyScope.ACCOUNT_TYPE)
+        .setSubscope(RandomStringUtils.randomAlphabetic(5)));
+  }
+
+  private void createTenantsOfAccountType(List<String> tenantIds, String accountType) {
+    for (String tenantId : tenantIds) {
+      tenantMetadataRepository.save(new TenantMetadata()
+          .setAccountType(accountType)
+          .setTenantId(tenantId)
+          .setMetadata(Collections.emptyMap()));
+    }
   }
 }

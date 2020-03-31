@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
 import com.rackspace.salus.policy.manage.services.MonitorPolicyManagement;
@@ -116,13 +117,7 @@ public class MonitorPolicyApiControllerTest {
 
   @Test
   public void testCreatePolicy() throws Exception {
-    MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
-        .setName("Test Name")
-        .setScope(PolicyScope.GLOBAL)
-        .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
-        .setCreatedTimestamp(Instant.EPOCH)
-        .setUpdatedTimestamp(Instant.EPOCH);
+    MonitorPolicy policy = getPolicy();
 
     when(monitorPolicyManagement.createMonitorPolicy(any()))
         .thenReturn(policy);
@@ -149,14 +144,38 @@ public class MonitorPolicyApiControllerTest {
     verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
+  private MonitorPolicy getPolicy() {
+    return (MonitorPolicy) new MonitorPolicy()
+        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
+        .setName("Test Name")
+        .setScope(PolicyScope.GLOBAL)
+        .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
+        .setCreatedTimestamp(Instant.EPOCH)
+        .setUpdatedTimestamp(Instant.EPOCH);
+  }
+
   @Test
   public void testUpdatePolicy() throws Exception {
-    mvc.perform(put(
-        "/api/admin/policy/monitors/{uuid}", UUID.randomUUID())
-        .content("test")
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isMethodNotAllowed());
+    MonitorPolicy policy = getPolicy();
 
+    MonitorPolicyUpdate policyUpdate = new MonitorPolicyUpdate()
+        .setScope(PolicyScope.ACCOUNT_TYPE)
+        .setSubscope("test");
+
+    when(monitorPolicyManagement.updateMonitorPolicy(any(), any()))
+        .thenReturn(policy);
+
+    mvc.perform(put(
+        "/api/admin/policy/monitors/{uuid}", policy.getId())
+        .content(objectMapper.writeValueAsString(policyUpdate))
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().json(
+            readContent("PolicyApiControllerTest/global_monitor_policy.json"), true));
+
+    verify(monitorPolicyManagement).updateMonitorPolicy(policy.getId(), policyUpdate);
     verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
