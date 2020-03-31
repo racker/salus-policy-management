@@ -51,6 +51,7 @@ public class PolicyApiCacheConfig {
       cacheManager.createCache("policymgmt_policy_monitor_ids", policiesCacheConfig());
       cacheManager.createCache("policymgmt_monitor_metadata_policies", metadataCacheConfig());
       cacheManager.createCache("policymgmt_monitor_metadata_map", metadataCacheConfig());
+      cacheManager.createCache("policymgmt_zone_metadata", metadataCacheConfig());
     };
   }
 

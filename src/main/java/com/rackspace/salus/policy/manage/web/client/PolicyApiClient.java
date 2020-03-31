@@ -61,6 +61,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class PolicyApiClient implements PolicyApi {
   private static final ParameterizedTypeReference<List<MonitorMetadataPolicyDTO>> LIST_OF_MONITOR_METADATA_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<UUID>> LIST_OF_UUID = new ParameterizedTypeReference<>() {};
+  private static final ParameterizedTypeReference<List<String>> LIST_OF_STRING = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<Map<String, MonitorMetadataPolicyDTO>> MAP_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private final RestTemplate restTemplate;
 
@@ -139,6 +140,23 @@ public class PolicyApiClient implements PolicyApi {
         HttpMethod.GET,
         null,
         MAP_OF_MONITOR_POLICY
+    ).getBody();
+  }
+
+  @CacheEvict(cacheNames = "policymgmt_zone_metadata", key = "#region", condition = "!#useCache",
+      beforeInvocation = true)
+  @Cacheable(cacheNames = "policymgmt_zone_metadata", key = "#region", condition = "#useCache")
+  public List<String> getDefaultMonitoringZones(String region, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/metadata/zones/{region}")
+        .build(region)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_STRING
     ).getBody();
   }
 }
