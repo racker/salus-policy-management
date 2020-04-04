@@ -18,7 +18,6 @@ package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
-import com.rackspace.salus.policy.manage.web.model.ZoneMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -88,6 +87,12 @@ public class MonitorMetadataPolicyManagement {
     return monitorMetadataPolicyRepository.findAll(page);
   }
 
+  public Optional<MonitorMetadataPolicy> getZonePolicy(String region) {
+    return monitorMetadataPolicyRepository
+        .findByScopeAndTargetClassNameAndKey(
+            PolicyScope.GLOBAL, TargetClassName.RemotePlugin, MetadataPolicy.ZONE_METADATA_PREFIX + region);
+  }
+
   /**
    * Creates a new policy in the database.
    *
@@ -132,26 +137,39 @@ public class MonitorMetadataPolicyManagement {
   }
 
   /**
-   * A helper method to convert a zone create payload into a
-   * typical monitor metadata create request.
+   * A helper method to create a monitor metadata entry in the database
+   * specifically for monitoring zone regions.
    *
-   * @param create The details of the policy to create.
+   * @param region The region to create a policy for.
+   * @param zones The zones to be used for the provided region.
    * @return The full details of the saved policy.
    * @throws AlreadyExistsException if an equivalent policy already exists.
    * @throws IllegalArgumentException if the parameters provided are not valid.
    */
-  public MonitorMetadataPolicy createZonePolicy(@Valid ZoneMetadataPolicyCreate create)
+  public MonitorMetadataPolicy createZonePolicy(String region, List<String> zones)
       throws AlreadyExistsException, IllegalArgumentException {
 
     MonitorMetadataPolicyCreate convertedCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
         .setSubscope(null)
-        .setKey(MetadataPolicy.ZONE_METADATA_PREFIX + create.getRegion())
+        .setKey(MetadataPolicy.ZONE_METADATA_PREFIX + region)
         .setTargetClassName(TargetClassName.RemotePlugin)
-        .setValue(String.join(",", create.getMonitoringZones()))
+        .setValue(String.join(",", zones))
         .setValueType(MetadataValueType.STRING_LIST);
 
     return createMetadataPolicy(convertedCreate);
+  }
+
+  public MonitorMetadataPolicy updateZonePolicy(String region, List<String> zones)
+      throws AlreadyExistsException, IllegalArgumentException {
+
+    MonitorMetadataPolicy policy = getZonePolicy(region).orElseThrow(() ->
+        new NotFoundException(String.format("No zone policy found for region %s", region)));
+
+    policy.setValue(String.join(",", zones));
+    monitorMetadataPolicyRepository.save(policy);
+    sendMetadataPolicyEvents(policy);
+    return policy;
   }
 
   public MonitorMetadataPolicy updateMetadataPolicy(UUID id, @Valid MetadataPolicyUpdate update) {
@@ -189,6 +207,14 @@ public class MonitorMetadataPolicyManagement {
     monitorMetadataPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMetadataPolicyEvents(policy);
+  }
+
+  public void removeZonePolicy(String region) {
+    MonitorMetadataPolicy policy = getZonePolicy(region).orElseThrow(() ->
+        new NotFoundException(String.format("No zone policy found for region %s", region)));
+
+    log.info("Removed policy {}", policy);
+    monitorMetadataPolicyRepository.delete(policy);
   }
 
   /**
