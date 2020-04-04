@@ -60,8 +60,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.co.jemos.podam.api.PodamFactory;
-import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @EnableTestContainersDatabase
@@ -69,8 +67,6 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @Import({PolicyManagement.class, MonitorMetadataPolicyManagement.class,
     TenantManagement.class, DatabaseConfig.class})
 public class MonitorMetadataPolicyManagementTest_Zones {
-
-  private PodamFactory podamFactory = new PodamFactoryImpl();
 
   @Captor
   ArgumentCaptor<PolicyEvent> policyEventArg;
