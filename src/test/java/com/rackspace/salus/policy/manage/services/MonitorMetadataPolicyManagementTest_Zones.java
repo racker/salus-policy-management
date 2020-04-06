@@ -30,7 +30,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.rackspace.salus.policy.manage.TestUtility;
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
@@ -126,7 +125,7 @@ public class MonitorMetadataPolicyManagementTest_Zones {
 
   @Test
   public void testCreateZonePolicy() {
-    String tenantId = TestUtility.createSingleTenant(resourceRepository);
+    String tenantId = randomAlphabetic(5);
     String region = randomAlphabetic(5);
     List<String> zones = List.of(randomAlphabetic(5), randomAlphabetic(5));
 
@@ -154,7 +153,7 @@ public class MonitorMetadataPolicyManagementTest_Zones {
 
   @Test
   public void testUpdateZonePolicy() {
-    String tenantId = TestUtility.createSingleTenant(resourceRepository);
+    String tenantId = randomAlphabetic(5);
     String region = randomAlphabetic(5);
     List<String> newZones = List.of(randomAlphabetic(5), randomAlphabetic(5));
 
@@ -178,7 +177,7 @@ public class MonitorMetadataPolicyManagementTest_Zones {
 
   @Test
   public void testRemoveZonePolicy() {
-    String tenantId = TestUtility.createSingleTenant(resourceRepository);
+    String tenantId = randomAlphabetic(5);
     String region = randomAlphabetic(5);
 
     // Create a policy to remove

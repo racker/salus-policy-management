@@ -325,7 +325,11 @@ public class MonitorMetadataPolicyManagement {
    */
   private List<String> getTenantsForMetadataPolicy(MonitorMetadataPolicy policy) {
     List<String> tenantsUsingPolicyKey;
-    if (policy.getTargetClassName().equals(TargetClassName.Monitor)) {
+    if (policy.getKey().startsWith(MetadataPolicy.ZONE_METADATA_PREFIX)) {
+      tenantsUsingPolicyKey = entityManager
+          .createNamedQuery("Monitor.getTenantsUsingZoneMetadata", String.class)
+          .getResultList();
+    } else if (policy.getTargetClassName().equals(TargetClassName.Monitor)) {
       tenantsUsingPolicyKey = entityManager
           .createNamedQuery("Monitor.getTenantsUsingPolicyMetadataInMonitor", String.class)
           .setParameter("metadataKey", policy.getKey())
