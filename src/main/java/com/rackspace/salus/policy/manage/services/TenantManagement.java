@@ -16,15 +16,17 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
-import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
-import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -50,6 +52,15 @@ public class TenantManagement {
   public Optional<TenantMetadata> getMetadata(String tenantId) {
     return tenantMetadataRepository.findByTenantId(tenantId);
   }
+  /**
+   * Gets all known tenant metadata for a single tenant.
+   * @param page The slice of results to be returned.
+   * @return A Page of tenant metadata.
+   */
+  public Page<TenantMetadata> getAllMetadata(Pageable page) {
+    return tenantMetadataRepository.findAll(page);
+  }
+
 
   /**
    * Get the account type value for a tenant if it is set.
