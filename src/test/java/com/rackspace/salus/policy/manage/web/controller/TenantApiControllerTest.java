@@ -85,7 +85,7 @@ public class TenantApiControllerTest {
         .thenReturn(Optional.of(metadata));
 
     mvc.perform(get(
-        "/api/admin/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/tenant-metadata/{tenantId}", metadata.getTenantId())
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -113,7 +113,7 @@ public class TenantApiControllerTest {
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
     mvc.perform(put(
-        "/api/admin/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/tenant-metadata/{tenantId}", metadata.getTenantId())
         .content(objectMapper.writeValueAsString(createOrUpdate))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
@@ -132,7 +132,7 @@ public class TenantApiControllerTest {
   public void testRemoveMetadata() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     mvc.perform(delete(
-        "/api/admin/account/{tenantId}", tenantId)
+        "/api/admin/tenant-metadata/{tenantId}", tenantId)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isNoContent());

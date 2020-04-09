@@ -66,7 +66,7 @@ public class TenantVerificationTest {
     when(tenantMetadataRepository.existsByTenantId(tenantId))
         .thenReturn(true);
 
-    mvc.perform(delete("/api/admin/account/{tenantId}", tenantId)
+    mvc.perform(delete("/api/admin/tenant-metadata/{tenantId}", tenantId)
         // header must be set to trigger tenant verification
         .header(TenantVerification.HEADER_TENANT, tenantId)
         .contentType(MediaType.APPLICATION_JSON))
@@ -82,7 +82,7 @@ public class TenantVerificationTest {
     when(tenantMetadataRepository.existsByTenantId(tenantId))
         .thenReturn(false);
 
-    mvc.perform(delete("/api/admin/account/{tenantId}", tenantId)
+    mvc.perform(delete("/api/admin/tenant-metadata/{tenantId}", tenantId)
         // header must be set to trigger tenant verification
         .header(TenantVerification.HEADER_TENANT, tenantId)
         .contentType(MediaType.APPLICATION_JSON))
