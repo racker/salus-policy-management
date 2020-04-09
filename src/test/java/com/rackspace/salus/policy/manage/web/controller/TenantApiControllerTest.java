@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.policy.manage.services.TenantManagement;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import edu.emory.mathcs.backport.java.util.Collections;
 import java.time.Instant;
 import java.util.Optional;
@@ -67,6 +68,9 @@ public class TenantApiControllerTest {
   @MockBean
   TenantManagement tenantManagement;
 
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
+
   @Test
   public void testGetMetadata() throws Exception {
     TenantMetadata metadata = new TenantMetadata()
@@ -81,7 +85,7 @@ public class TenantApiControllerTest {
         .thenReturn(Optional.of(metadata));
 
     mvc.perform(get(
-        "/api/public/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/account/{tenantId}", metadata.getTenantId())
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -109,7 +113,7 @@ public class TenantApiControllerTest {
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
     mvc.perform(put(
-        "/api/public/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/account/{tenantId}", metadata.getTenantId())
         .content(objectMapper.writeValueAsString(createOrUpdate))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
@@ -128,7 +132,7 @@ public class TenantApiControllerTest {
   public void testRemoveMetadata() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     mvc.perform(delete(
-        "/api/public/account/{tenantId}", tenantId)
+        "/api/admin/account/{tenantId}", tenantId)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isNoContent());

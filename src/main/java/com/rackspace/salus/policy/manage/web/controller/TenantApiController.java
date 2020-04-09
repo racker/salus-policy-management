@@ -48,7 +48,7 @@ public class TenantApiController {
     this.tenantManagement = tenantManagement;
   }
 
-  @GetMapping("/public/account/{tenantId}")
+  @GetMapping("/admin/account/{tenantId}")
   @ApiOperation(value = "Retrieves miscellaneous information stored for a particular tenant")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully retrieved tenant metadata")})
   public TenantMetadataDTO getTenantMetadata(@PathVariable String tenantId) {
@@ -57,7 +57,7 @@ public class TenantApiController {
             () -> new NotFoundException(String.format("No metadata found for tenant %s", tenantId))));
   }
 
-  @PutMapping("/public/account/{tenantId}")
+  @PutMapping("/admin/account/{tenantId}")
   @ApiOperation(value = "Creates or updates miscellaneous information stored for a particular tenant")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully updated tenant metadata")})
   public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
@@ -65,7 +65,7 @@ public class TenantApiController {
     return new TenantMetadataDTO(tenantManagement.upsertTenantMetadata(tenantId, input));
   }
 
-  @DeleteMapping("/public/account/{tenantId}")
+  @DeleteMapping("/admin/account/{tenantId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @ApiOperation(value = "Deletes all tenant metadata for an account")
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Successfully removed tenant metadata")})

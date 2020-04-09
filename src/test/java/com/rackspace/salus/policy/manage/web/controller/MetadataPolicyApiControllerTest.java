@@ -42,6 +42,7 @@ import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,9 @@ public class MetadataPolicyApiControllerTest {
 
   @MockBean
   MonitorMetadataPolicyManagement monitorMetadataPolicyManagement;
+
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
 
   @Test
   public void testGetById() throws Exception {
