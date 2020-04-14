@@ -16,12 +16,9 @@
 
 package com.rackspace.salus.policy.manage.web.controller;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,12 +56,12 @@ public class TenantVerificationTest {
   @MockBean
   TenantMetadataRepository tenantMetadataRepository;
 
+  /**
+   * Verifies tenant verification is not performed for policy admin api requests.
+   */
   @Test
-  public void testTenantVerification_Success() throws Exception {
+  public void testTenantVerification_Ignored() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-
-    when(tenantMetadataRepository.existsByTenantId(tenantId))
-        .thenReturn(true);
 
     mvc.perform(delete("/api/admin/tenant-metadata/{tenantId}", tenantId)
         // header must be set to trigger tenant verification
@@ -72,25 +69,6 @@ public class TenantVerificationTest {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
 
-    verify(tenantMetadataRepository).existsByTenantId(tenantId);
-  }
-
-  @Test
-  public void testTenantVerification_Fail() throws Exception {
-    String tenantId = RandomStringUtils.randomAlphabetic(10);
-
-    when(tenantMetadataRepository.existsByTenantId(tenantId))
-        .thenReturn(false);
-
-    mvc.perform(delete("/api/admin/tenant-metadata/{tenantId}", tenantId)
-        // header must be set to trigger tenant verification
-        .header(TenantVerification.HEADER_TENANT, tenantId)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound())
-        .andExpect(content()
-            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.message", is(TenantVerification.ERROR_MSG)));
-
-    verify(tenantMetadataRepository).existsByTenantId(tenantId);
+    verify(tenantMetadataRepository, never()).existsByTenantId(tenantId);
   }
 }
