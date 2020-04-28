@@ -51,3 +51,7 @@ steps:
     volumes:
     - name: user.home
       path: /root
+artifacts:
+  objects:
+    location: 'gs://salus_www/policy_management/'
+    paths: ['target/generated/swagger/converted.html']
