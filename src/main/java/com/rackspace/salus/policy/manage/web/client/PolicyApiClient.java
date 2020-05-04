@@ -17,6 +17,7 @@
 package com.rackspace.salus.policy.manage.web.client;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
@@ -59,6 +60,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * </p>
  */
 public class PolicyApiClient implements PolicyApi {
+  private static final ParameterizedTypeReference<List<MonitorPolicyDTO>> LIST_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<MonitorMetadataPolicyDTO>> LIST_OF_MONITOR_METADATA_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<UUID>> LIST_OF_UUID = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<String>> LIST_OF_STRING = new ParameterizedTypeReference<>() {};
@@ -67,6 +69,24 @@ public class PolicyApiClient implements PolicyApi {
 
   public PolicyApiClient(RestTemplate restTemplate) {
     this.restTemplate = restTemplate;
+  }
+
+  @CacheEvict(cacheNames = "policymgmt_monitor_policy", key = "#tenantId",
+      condition = "!#useCache", beforeInvocation = true)
+  @Cacheable(cacheNames = "policymgmt_monitor_policy", key = "#tenantId",
+      condition = "#useCache")
+  public List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}")
+        .build(tenantId)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_MONITOR_POLICY
+    ).getBody();
   }
 
   @CacheEvict(cacheNames = "policymgmt_monitor_policy_ids", key = "#tenantId",
