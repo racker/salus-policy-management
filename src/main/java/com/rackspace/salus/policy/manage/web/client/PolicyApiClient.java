@@ -71,9 +71,9 @@ public class PolicyApiClient implements PolicyApi {
     this.restTemplate = restTemplate;
   }
 
-  @CacheEvict(cacheNames = "policymgmt_monitor_policy", key = "#tenantId",
+  @CacheEvict(cacheNames = "policymgmt_monitor_policies", key = "#tenantId",
       condition = "!#useCache", beforeInvocation = true)
-  @Cacheable(cacheNames = "policymgmt_monitor_policy", key = "#tenantId",
+  @Cacheable(cacheNames = "policymgmt_monitor_policies", key = "#tenantId",
       condition = "#useCache")
   public List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
