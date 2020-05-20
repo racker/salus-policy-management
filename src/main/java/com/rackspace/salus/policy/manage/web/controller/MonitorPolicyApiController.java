@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -83,8 +84,9 @@ public class MonitorPolicyApiController {
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/policy-ids")
   @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor Policy ids retrieved")})
-  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(@PathVariable String tenantId) {
-    return monitorPolicyManagement.getEffectiveMonitorPolicyIdsForTenant(tenantId);
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(@PathVariable String tenantId,
+      @RequestParam(required = false, defaultValue = "true") boolean includeNullMonitors) {
+    return monitorPolicyManagement.getEffectiveMonitorPolicyIdsForTenant(tenantId, includeNullMonitors);
   }
 
   @GetMapping("/admin/policy/monitors")
@@ -118,5 +120,17 @@ public class MonitorPolicyApiController {
   @ApiResponses(value = { @ApiResponse(code = 204, message = "Monitor Policy Deleted")})
   public void delete(@PathVariable UUID uuid) {
     monitorPolicyManagement.removeMonitorPolicy(uuid);
+  }
+
+  @PostMapping("/admin/policy/monitors/opt-out")
+  @ResponseStatus(HttpStatus.CREATED)
+  @ApiOperation(value = "Opt-out of an existing Monitor Policy")
+  @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully opted out of Monitor Policy")})
+  public MonitorPolicyDTO optOut(@Valid @RequestBody final MonitorPolicyCreate input)
+      throws IllegalArgumentException {
+    if (input.getMonitorId() != null) {
+      throw new IllegalArgumentException("monitorId cannot be set when opting out of policy");
+    }
+    return new MonitorPolicyDTO(monitorPolicyManagement.createMonitorPolicy(input));
   }
 }

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -132,12 +133,19 @@ public class MonitorPolicyManagement {
     return getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream()
         .map(MonitorPolicy::getMonitorId)
+        .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
 
-  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId) {
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean includeNullMonitors) {
     return getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream()
+        .filter(p -> {
+          if (!includeNullMonitors) {
+            return p.getMonitorId() != null;
+          }
+          return true;
+        })
         .map(MonitorPolicy::getId)
         .collect(Collectors.toList());
   }
@@ -201,7 +209,7 @@ public class MonitorPolicyManagement {
    * @return True if the monitor exists, otherwise false.
    */
   private boolean isValidMonitorId(UUID monitorId) {
-    return monitorRepository.existsByIdAndTenantId(monitorId, Monitor.POLICY_TENANT);
+    return monitorId == null || monitorRepository.existsByIdAndTenantId(monitorId, Monitor.POLICY_TENANT);
   }
 
   /**
@@ -226,6 +234,10 @@ public class MonitorPolicyManagement {
 
   private void sendMonitorPolicyEventsForTenants(MonitorPolicy policy, Collection<String> tenantIds) {
     log.info("Sending {} monitor policy events for {}", tenantIds.size(), policy);
+
+    if (policy.getMonitorId() == null) {
+      log.debug("Sending opt-out event for policy={}", policy);
+    }
 
     tenantIds.stream()
         .map(tenantId -> new MonitorPolicyEvent()

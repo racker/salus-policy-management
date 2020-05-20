@@ -100,9 +100,10 @@ public class PolicyApiClient implements PolicyApi {
       condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = CACHE_POLICY_IDS, key = "#tenantId",
       condition = "#useCache")
-  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean useCache) {
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean includeNullMonitors, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/policy-ids")
+        .queryParam("includeNullMonitors", includeNullMonitors)
         .build(tenantId)
         .toString();
 
