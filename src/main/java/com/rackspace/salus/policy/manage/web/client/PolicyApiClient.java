@@ -84,8 +84,8 @@ public class PolicyApiClient implements PolicyApi {
       condition = "#useCache")
   public List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
-        .fromPath("/api/admin/policy/monitors/effective/{tenantId}")
-        .build(tenantId)
+        .fromUriString("/api/admin/policy/monitors/effective/{tenantId}")
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -103,7 +103,7 @@ public class PolicyApiClient implements PolicyApi {
   public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/policy-ids")
-        .build(tenantId)
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -121,7 +121,7 @@ public class PolicyApiClient implements PolicyApi {
   public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/monitor-ids")
-        .build(tenantId)
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -140,7 +140,7 @@ public class PolicyApiClient implements PolicyApi {
       String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}")
-        .build(tenantId)
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -159,7 +159,7 @@ public class PolicyApiClient implements PolicyApi {
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
-        .build(tenantId, className, monitorType)
+        .buildAndExpand(tenantId, className, monitorType)
         .toString();
 
     return restTemplate.exchange(
@@ -176,7 +176,7 @@ public class PolicyApiClient implements PolicyApi {
   public List<String> getDefaultMonitoringZones(String region, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/zones/{region}")
-        .build(region)
+        .buildAndExpand(region)
         .toString();
 
     return restTemplate.exchange(

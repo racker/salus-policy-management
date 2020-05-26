@@ -132,7 +132,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT2S"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     mockServer.expect(ExpectedCount.twice(),
         requestTo(String.format(
