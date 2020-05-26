@@ -93,7 +93,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT2S"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
@@ -179,7 +179,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT1M"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     // only one of the three requests will hit the cache
     mockServer.expect(ExpectedCount.twice(),
