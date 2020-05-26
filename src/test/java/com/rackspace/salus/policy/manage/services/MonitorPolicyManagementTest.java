@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -170,6 +171,46 @@ public class MonitorPolicyManagementTest {
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
             .setMonitorId(policyCreate.getMonitorId())
+            .setPolicyId(policy.getId())
+            .setTenantId(tenantId)
+    ));
+
+    verifyNoMoreInteractions(policyEventProducer);
+  }
+
+  /**
+   * This tests creating a tenant scoped policy that opts out of a global policy.
+   */
+  @Test
+  public void testCreateMonitorPolicy_nullMonitor() {
+    // Generate a random tenant and account type for the test
+    String accountType = RandomStringUtils.randomAlphabetic(10);
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+
+    // Store a default tenant in the db for that account type
+    tenantMetadataRepository.save(new TenantMetadata()
+        .setAccountType(accountType)
+        .setTenantId(tenantId)
+        .setMetadata(Collections.emptyMap()));
+
+    MonitorPolicyCreate policyOptOut = new MonitorPolicyCreate()
+        .setScope(PolicyScope.TENANT)
+        .setSubscope(tenantId)
+        .setName(RandomStringUtils.randomAlphabetic(10))
+        .setMonitorId(null);
+
+    MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyOptOut);
+    assertThat(policy.getId(), notNullValue());
+    assertThat(policy.getScope(), equalTo(policyOptOut.getScope()));
+    assertThat(policy.getSubscope(), equalTo(policyOptOut.getSubscope()));
+    assertThat(policy.getName(), equalTo(policyOptOut.getName()));
+    assertThat(policy.getMonitorId(), nullValue());
+
+    verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
+
+    assertThat(policyEventArg.getValue(), equalTo(
+        new MonitorPolicyEvent()
+            .setMonitorId(null)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
