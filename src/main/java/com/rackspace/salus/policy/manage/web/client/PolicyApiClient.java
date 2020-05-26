@@ -84,7 +84,7 @@ public class PolicyApiClient implements PolicyApi {
       condition = "#useCache")
   public List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
-        .fromUriString("/api/admin/policy/monitors/effective/{tenantId}")
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}")
         .buildAndExpand(tenantId)
         .toString();
 
