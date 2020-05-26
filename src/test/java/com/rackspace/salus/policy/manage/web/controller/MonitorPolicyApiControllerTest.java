@@ -18,6 +18,7 @@ package com.rackspace.salus.policy.manage.web.controller;
 
 import static com.rackspace.salus.test.JsonTestUtils.readContent;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -116,6 +117,47 @@ public class MonitorPolicyApiControllerTest {
         .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicies)));
 
     verify(monitorPolicyManagement).getEffectiveMonitorPoliciesForTenant(tenantId);
+    verifyNoMoreInteractions(monitorPolicyManagement);
+  }
+
+  @Test
+  public void testGetEffectivePolicyIdsByTenantId() throws Exception {
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+    final List<UUID> listOfPolicyIds = podamFactory.manufacturePojo(ArrayList.class, UUID.class);
+    when(monitorPolicyManagement.getEffectiveMonitorPolicyIdsForTenant(anyString(), anyBoolean()))
+        .thenReturn(listOfPolicyIds);
+
+    mvc.perform(get(
+        "/api/admin/policy/monitors/effective/{tenantId}/policy-ids", tenantId)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(content()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicyIds)));
+
+    verify(monitorPolicyManagement).getEffectiveMonitorPolicyIdsForTenant(tenantId, true);
+    verifyNoMoreInteractions(monitorPolicyManagement);
+  }
+
+  @Test
+  public void testGetEffectivePolicyIdsByTenantId_excludeNull() throws Exception {
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+    final List<UUID> listOfPolicyIds = podamFactory.manufacturePojo(ArrayList.class, UUID.class);
+    when(monitorPolicyManagement.getEffectiveMonitorPolicyIdsForTenant(anyString(), anyBoolean()))
+        .thenReturn(listOfPolicyIds);
+
+    mvc.perform(get(
+        "/api/admin/policy/monitors/effective/{tenantId}/policy-ids", tenantId)
+        .queryParam("includeNullMonitors", "false")
+        .contentType(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(content()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicyIds)));
+
+    verify(monitorPolicyManagement).getEffectiveMonitorPolicyIdsForTenant(tenantId, false);
     verifyNoMoreInteractions(monitorPolicyManagement);
   }
 
