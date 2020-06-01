@@ -38,7 +38,6 @@ import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.entities.Policy;
-import com.rackspace.salus.policy.manage.services.MonitorPolicyManagementTest.*;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MetadataPolicyEvent;
@@ -60,7 +59,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -199,7 +197,7 @@ public class MonitorMetadataPolicyManagementTest {
 
   @Test
   public void testCreateMetadataPolicy_multipleTenants() {
-    List<String> tenantIds = TestUtility.createMultipleTenants(resourceRepository);
+    List<String> tenantIds = TestUtility.createMultipleTenants(tenantMetadataRepository);
 
     MonitorMetadataPolicyCreate policyCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
         .setMonitorType(MonitorType.ssl)
@@ -475,7 +473,7 @@ public class MonitorMetadataPolicyManagementTest {
 
   @Test
   public void testRemoveMetadataPolicy() {
-    String tenantId = TestUtility.createSingleTenant(resourceRepository);
+    String tenantId = TestUtility.createSingleTenant(tenantMetadataRepository);
 
     // Create a policy to remove
     MetadataPolicy saved = (MetadataPolicy) policyRepository.save(new MonitorMetadataPolicy()
