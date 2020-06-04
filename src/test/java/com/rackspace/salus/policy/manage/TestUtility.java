@@ -17,13 +17,14 @@
 package com.rackspace.salus.policy.manage;
 
 import com.rackspace.salus.telemetry.entities.Monitor;
-import com.rackspace.salus.telemetry.entities.Resource;
+import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
-import com.rackspace.salus.telemetry.repositories.ResourceRepository;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
@@ -37,20 +38,32 @@ public class TestUtility {
     return monitorRepository.save(monitor);
   }
 
-  public static String createSingleTenant(ResourceRepository resourceRepository) {
-    Resource resource = podamFactory.manufacturePojo(Resource.class);
-    resource.setResourceId(RandomStringUtils.randomAlphabetic(10));
-    return resourceRepository.save(resource).getTenantId();
+  public static String createSingleTenant(TenantMetadataRepository tenantRepository) {
+      TenantMetadata tenantMetadata = podamFactory.manufacturePojo(TenantMetadata.class);
+      tenantMetadata.setTenantId(RandomStringUtils.randomAlphanumeric(10));
+      return tenantRepository.save(tenantMetadata).getTenantId();
   }
 
-  public static List<String> createMultipleTenants(ResourceRepository resourceRepository) {
-    return createMultipleTenants(resourceRepository, 5);
+  public static List<String> createMultipleTenants(TenantMetadataRepository tenantRepository) {
+    return createMultipleTenants(tenantRepository, 5);
   }
 
-  public static List<String> createMultipleTenants(ResourceRepository resourceRepository, int count) {
+  public static List<String> createMultipleTenants(TenantMetadataRepository tenantRepository, int count) {
     return IntStream.range(0, count)
-        .mapToObj(i -> createSingleTenant(resourceRepository))
+        .mapToObj(i -> createSingleTenant(tenantRepository))
         .collect(Collectors.toList());
   }
 
+  public static String createTenantOfAccountType(TenantMetadataRepository tenantRepository, String accountType) {
+    return tenantRepository.save(new TenantMetadata()
+        .setAccountType(accountType)
+        .setTenantId(RandomStringUtils.randomAlphanumeric(10))
+        .setMetadata(Collections.emptyMap())).getTenantId();
+  }
+
+  public static List<String> createTenantsOfAccountType(TenantMetadataRepository tenantRepository, int count, String accountType) {
+    return IntStream.range(0, count)
+        .mapToObj(i -> createTenantOfAccountType(tenantRepository, accountType))
+        .collect(Collectors.toList());
+  }
 }

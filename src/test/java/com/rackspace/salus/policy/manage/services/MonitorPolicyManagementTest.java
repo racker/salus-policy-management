@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import static com.rackspace.salus.policy.manage.TestUtility.createTenantsOfAccountType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -220,7 +221,7 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testCreateMonitorPolicy_multipleTenants() {
-    List<String> tenantIds = TestUtility.createMultipleTenants(resourceRepository);
+    List<String> tenantIds = TestUtility.createMultipleTenants(tenantMetadataRepository);
     Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
@@ -282,16 +283,15 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testUpdateMonitorPolicy() {
-    List<String> tenantsOnNewPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
-    List<String> tenantsOnOriginalPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
-    List<String> tenantsOnIrrelevantPolicy = TestUtility.createMultipleTenants(resourceRepository, new Random().nextInt(20) + 5);
-
     MonitorPolicy originalPolicy = createAccountTypePolicy();
     String newSubscope = RandomStringUtils.randomAlphabetic(10);
 
-    createTenantsOfAccountType(tenantsOnNewPolicy, newSubscope);
-    createTenantsOfAccountType(tenantsOnOriginalPolicy, originalPolicy.getSubscope());
-    createTenantsOfAccountType(tenantsOnIrrelevantPolicy, "irrelevantAccounts");
+    List<String> tenantsOnNewPolicy = createTenantsOfAccountType(
+        tenantMetadataRepository, new Random().nextInt(20) + 5, newSubscope);
+    List<String> tenantsOnOriginalPolicy = createTenantsOfAccountType(
+        tenantMetadataRepository, new Random().nextInt(20) + 5, originalPolicy.getSubscope());
+    createTenantsOfAccountType(
+        tenantMetadataRepository, new Random().nextInt(20) + 5, "irrelevantAccounts");
 
     MonitorPolicyUpdate update = new MonitorPolicyUpdate()
         .setScope(PolicyScope.ACCOUNT_TYPE)
@@ -450,7 +450,7 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testRemoveMonitorPolicy() {
-    String tenantId = TestUtility.createSingleTenant(resourceRepository);
+    String tenantId = TestUtility.createSingleTenant(tenantMetadataRepository);
 
     // Create a policy to remove
     MonitorPolicy saved = (MonitorPolicy) policyRepository.save(new MonitorPolicy()
@@ -487,7 +487,7 @@ public class MonitorPolicyManagementTest {
 
   @Test
   public void testGetAllDistinctTenants() {
-    List<String>expectedIds = TestUtility.createMultipleTenants(resourceRepository);
+    List<String>expectedIds = TestUtility.createMultipleTenants(tenantMetadataRepository);
 
     List<String> tenantIds = policyManagement.getAllDistinctTenantIds();
 
@@ -502,14 +502,5 @@ public class MonitorPolicyManagementTest {
         .setMonitorId(UUID.randomUUID())
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(5)));
-  }
-
-  private void createTenantsOfAccountType(List<String> tenantIds, String accountType) {
-    for (String tenantId : tenantIds) {
-      tenantMetadataRepository.save(new TenantMetadata()
-          .setAccountType(accountType)
-          .setTenantId(tenantId)
-          .setMetadata(Collections.emptyMap()));
-    }
   }
 }
