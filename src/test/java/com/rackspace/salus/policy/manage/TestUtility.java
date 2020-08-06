@@ -20,6 +20,7 @@ import com.rackspace.salus.telemetry.entities.Monitor;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ public class TestUtility {
   public static Monitor createPolicyMonitor(MonitorRepository monitorRepository) {
     Monitor monitor = podamFactory.manufacturePojo(Monitor.class);
     monitor.setTenantId(Monitor.POLICY_TENANT);
+    monitor.setInterval(Duration.ofSeconds(60));
     return monitorRepository.save(monitor);
   }
 
