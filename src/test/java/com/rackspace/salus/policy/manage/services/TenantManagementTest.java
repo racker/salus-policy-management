@@ -171,7 +171,7 @@ public class TenantManagementTest {
   }
 
   @Test(expected = NotFoundException.class)
-  public void testUpdateTenantMetadata_() {
+  public void testUpdateTenantMetadata_tenantNotFound() {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
 
