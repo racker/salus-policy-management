@@ -73,7 +73,7 @@ public class TenantApiController {
   @ApiOperation(value = "Creates information stored for a particular tenant")
   @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully created tenant metadata")})
   public TenantMetadataDTO createTenantMetadata(@RequestBody TenantMetadataCU input) {
-    return new TenantMetadataDTO(tenantManagement.upsertTenantMetadata(input.getTenantId(), input));
+    return new TenantMetadataDTO(tenantManagement.createMetaData(input.getTenantId(), input));
   }
 
   @PutMapping("/admin/tenant-metadata/{tenantId}")
@@ -81,7 +81,7 @@ public class TenantApiController {
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Successfully updated tenant metadata")})
   public TenantMetadataDTO upsertTenantMetadata(@PathVariable String tenantId,
       @RequestBody TenantMetadataCU input) {
-    return new TenantMetadataDTO(tenantManagement.upsertTenantMetadata(tenantId, input));
+    return new TenantMetadataDTO(tenantManagement.updateMetaData(tenantId, input));
   }
 
   @DeleteMapping("/admin/tenant-metadata/{tenantId}")

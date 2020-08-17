@@ -101,7 +101,7 @@ public class TenantManagementTest {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
 
-    TenantMetadata metadata = tenantManagement.upsertTenantMetadata(tenantId, create);
+    TenantMetadata metadata = tenantManagement.createMetaData(tenantId, create);
     assertThat(metadata, notNullValue());
     assertThat(metadata.getId(), notNullValue());
     assertThat(metadata.getTenantId(), equalTo(tenantId));
@@ -126,7 +126,7 @@ public class TenantManagementTest {
         .setAccountType("updated AccountType")
         .setMetadata(newMetadata);
 
-    TenantMetadata metadata = tenantManagement.upsertTenantMetadata(original.getTenantId(), update);
+    TenantMetadata metadata = tenantManagement.updateMetaData(original.getTenantId(), update);
     assertThat(metadata, notNullValue());
     assertThat(metadata.getId(), equalTo(original.getId()));
     assertThat(metadata.getTenantId(), equalTo(original.getTenantId()));

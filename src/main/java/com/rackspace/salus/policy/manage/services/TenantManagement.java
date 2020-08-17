@@ -77,36 +77,52 @@ public class TenantManagement {
   }
 
   /**
-   * Create or update the information stored relating to an individual tenant.
+   * Update the information stored relating to an individual tenant.
    * @param tenantId The tenant to store this data under.
    * @param input The data to alter.
    * @return The full tenant information.
    */
-  public TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
+  public TenantMetadata updateMetaData(String tenantId, TenantMetadataCU input) {
     Optional<TenantMetadata> metadata = tenantMetadataRepository.findByTenantId(tenantId);
 
     TenantMetadata updated;
     if (metadata.isEmpty()) {
-      log.info("Creating tenant metadata for {}", tenantId);
-      updated = new TenantMetadata()
-        .setTenantId(tenantId);
+      throw new NotFoundException("No tenant found for given tenantId");
     } else {
       log.info("Updating tenant metadata for {}", tenantId);
       updated = metadata.get();
     }
+    return upsertTenantMetaData(tenantId, input, updated);
+  }
+
+  /**
+   * Create the information for an individual tenant
+   * @param tenantId
+   * @param input
+   * @return The full tenant information
+   */
+  public TenantMetadata createMetaData(String tenantId, TenantMetadataCU input) {
+    log.info("Creating tenant metadata for {}", tenantId);
+    TenantMetadata tenantMetadata = new TenantMetadata()
+        .setTenantId(tenantId);
+    return upsertTenantMetaData(tenantId, input, tenantMetadata);
+
+  }
+
+  private TenantMetadata upsertTenantMetaData(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
 
     PropertyMapper map = PropertyMapper.get();
     map.from(input.getAccountType())
         .whenNonNull()
-        .to(updated::setAccountType);
+        .to(tenantMetadata::setAccountType);
     map.from(input.getMetadata())
         .whenNonNull()
-        .to(updated::setMetadata);
+        .to(tenantMetadata::setMetadata);
 
-    tenantMetadataRepository.save(updated);
+    tenantMetadataRepository.save(tenantMetadata);
     sendTenantChangeEvents(tenantId);
 
-    return updated;
+    return tenantMetadata;
   }
 
   public void removeTenantMetadata(String tenantId) {
