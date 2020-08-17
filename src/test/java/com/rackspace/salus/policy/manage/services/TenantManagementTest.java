@@ -21,13 +21,17 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
+import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
 import java.util.HashMap;
@@ -154,4 +158,27 @@ public class TenantManagementTest {
     verifyNoMoreInteractions(policyEventProducer);
   }
 
+  @Test(expected = AlreadyExistsException.class)
+  public void testCreateTenantMetadata_alreadyExists() {
+    String tenantId = "aaaaaa";
+    TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
+
+    TenantMetadata tenantMetadata = podamFactory.manufacturePojo(TenantMetadata.class);
+    tenantMetadata.setTenantId("aaaaaa");
+    tenantMetadataRepository.save(tenantMetadata);
+
+    tenantManagement.createMetaData(tenantId, create);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testUpdateTenantMetadata_() {
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+    TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
+
+    TenantMetadata tenantMetadata = podamFactory.manufacturePojo(TenantMetadata.class);
+    tenantMetadata.setTenantId("aaaaaa");
+    tenantMetadataRepository.save(tenantMetadata);
+
+    tenantManagement.updateMetaData(tenantId, create);
+  }
 }

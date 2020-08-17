@@ -18,6 +18,7 @@ package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
@@ -83,16 +84,13 @@ public class TenantManagement {
    * @return The full tenant information.
    */
   public TenantMetadata updateMetaData(String tenantId, TenantMetadataCU input) {
-    Optional<TenantMetadata> metadata = tenantMetadataRepository.findByTenantId(tenantId);
+    log.info("Updating tenant metadata for {}", tenantId);
 
-    TenantMetadata updated;
-    if (metadata.isEmpty()) {
-      throw new NotFoundException("No tenant found for given tenantId");
-    } else {
-      log.info("Updating tenant metadata for {}", tenantId);
-      updated = metadata.get();
-    }
-    return upsertTenantMetaData(tenantId, input, updated);
+    TenantMetadata metadata = getMetadata(tenantId).orElseThrow(() ->
+        new NotFoundException(
+            String.format("No metadata found for tenant %s", tenantId)));
+
+    return upsertTenantMetaData(tenantId, input, metadata);
   }
 
   /**
@@ -103,6 +101,10 @@ public class TenantManagement {
    */
   public TenantMetadata createMetaData(String tenantId, TenantMetadataCU input) {
     log.info("Creating tenant metadata for {}", tenantId);
+    if(getMetadata(tenantId).isPresent()) {
+      throw new AlreadyExistsException(String.format("Metadata already exists for tenant %s", tenantId));
+    }
+
     TenantMetadata tenantMetadata = new TenantMetadata()
         .setTenantId(tenantId);
     return upsertTenantMetaData(tenantId, input, tenantMetadata);
