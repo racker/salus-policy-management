@@ -86,9 +86,9 @@ public class TenantManagement {
   public TenantMetadata updateMetaData(String tenantId, TenantMetadataCU input) {
     log.info("Updating tenant metadata for {}", tenantId);
 
-    TenantMetadata metadata = getMetadata(tenantId).orElse(
-        new TenantMetadata().setTenantId(tenantId)
-    );
+    TenantMetadata metadata = getMetadata(tenantId).orElseGet(() -> {
+      return new TenantMetadata().setTenantId(tenantId);
+    });
 
     return upsertTenantMetaData(tenantId, input, metadata);
   }
