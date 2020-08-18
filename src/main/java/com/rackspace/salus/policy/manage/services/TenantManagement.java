@@ -77,20 +77,20 @@ public class TenantManagement {
     return metadata.get().getAccountType();
   }
 
-  /**ˍ
+  /**
    * Update the information stored relating to an individual tenant.
    * @param tenantId The tenant to store this data under.
    * @param input The data to alter.
    * @return The full tenant information.
    */
-  public TenantMetadata updateMetaData(String tenantId, TenantMetadataCU input) {
+  public TenantMetadata updateMetadata(String tenantId, TenantMetadataCU input) {
     log.info("Updating tenant metadata for {}", tenantId);
 
     TenantMetadata metadata = getMetadata(tenantId).orElseGet(() -> {
       return new TenantMetadata().setTenantId(tenantId);
     });
 
-    return upsertTenantMetaData(tenantId, input, metadata);
+    return upsertTenantMetadata(tenantId, input, metadata);
   }
 
   /**
@@ -99,7 +99,7 @@ public class TenantManagement {
    * @param input
    * @return The full tenant information
    */
-  public TenantMetadata createMetaData(String tenantId, TenantMetadataCU input) {
+  public TenantMetadata createMetadata(String tenantId, TenantMetadataCU input) {
     log.info("Creating tenant metadata for {}", tenantId);
     if(getMetadata(tenantId).isPresent()) {
       throw new AlreadyExistsException(String.format("Metadata already exists for tenant %s", tenantId));
@@ -107,11 +107,11 @@ public class TenantManagement {
 
     TenantMetadata tenantMetadata = new TenantMetadata()
         .setTenantId(tenantId);
-    return upsertTenantMetaData(tenantId, input, tenantMetadata);
+    return upsertTenantMetadata(tenantId, input, tenantMetadata);
 
   }
 
-  private TenantMetadata upsertTenantMetaData(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
+  private TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
 
     PropertyMapper map = PropertyMapper.get();
     map.from(input.getAccountType())

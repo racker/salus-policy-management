@@ -109,7 +109,7 @@ public class TenantApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(tenantManagement.updateMetaData(anyString(), any()))
+    when(tenantManagement.updateMetadata(anyString(), any()))
         .thenReturn(metadata);
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
@@ -124,7 +124,7 @@ public class TenantApiControllerTest {
         .andExpect(content().json(
             readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
 
-    verify(tenantManagement).updateMetaData(metadata.getTenantId(), createOrUpdate);
+    verify(tenantManagement).updateMetadata(metadata.getTenantId(), createOrUpdate);
     verifyNoMoreInteractions(tenantManagement);
 
   }
@@ -152,7 +152,7 @@ public class TenantApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(tenantManagement.createMetaData(anyString(), any()))
+    when(tenantManagement.createMetadata(anyString(), any()))
         .thenReturn(metadata);
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
@@ -168,7 +168,7 @@ public class TenantApiControllerTest {
         .andExpect(content().json(
             readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
 
-    verify(tenantManagement).createMetaData(metadata.getTenantId(), createOrUpdate);
+    verify(tenantManagement).createMetadata(metadata.getTenantId(), createOrUpdate);
     verifyNoMoreInteractions(tenantManagement);
 
   }
