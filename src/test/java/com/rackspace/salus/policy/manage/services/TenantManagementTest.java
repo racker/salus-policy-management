@@ -170,15 +170,22 @@ public class TenantManagementTest {
     tenantManagement.createMetaData(tenantId, create);
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void testUpdateTenantMetadata_tenantNotFound() {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
+    TenantMetadataCU update = podamFactory.manufacturePojo(TenantMetadataCU.class);
 
-    TenantMetadata tenantMetadata = podamFactory.manufacturePojo(TenantMetadata.class);
-    tenantMetadata.setTenantId("aaaaaa");
-    tenantMetadataRepository.save(tenantMetadata);
+    TenantMetadata metadata = tenantManagement.updateMetaData(tenantId, update);
+    assertThat(metadata, notNullValue());
+    assertThat(metadata.getId(), notNullValue());
+    assertThat(metadata.getTenantId(), equalTo(tenantId));
+    assertThat(metadata.getAccountType(), equalTo(update.getAccountType()));
+    assertThat(metadata.getMetadata(), equalTo(update.getMetadata()));
 
-    tenantManagement.updateMetaData(tenantId, create);
+    verify(policyEventProducer).sendTenantChangeEvent(
+        new TenantPolicyChangeEvent()
+            .setTenantId(tenantId));
+
+    verifyNoMoreInteractions(policyEventProducer);
   }
 }

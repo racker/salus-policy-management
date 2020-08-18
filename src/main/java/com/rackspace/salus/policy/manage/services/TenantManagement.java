@@ -77,7 +77,7 @@ public class TenantManagement {
     return metadata.get().getAccountType();
   }
 
-  /**
+  /**ˍ
    * Update the information stored relating to an individual tenant.
    * @param tenantId The tenant to store this data under.
    * @param input The data to alter.
@@ -86,9 +86,9 @@ public class TenantManagement {
   public TenantMetadata updateMetaData(String tenantId, TenantMetadataCU input) {
     log.info("Updating tenant metadata for {}", tenantId);
 
-    TenantMetadata metadata = getMetadata(tenantId).orElseThrow(() ->
-        new NotFoundException(
-            String.format("No metadata found for tenant %s", tenantId)));
+    TenantMetadata metadata = getMetadata(tenantId).orElse(
+        new TenantMetadata().setTenantId(tenantId)
+    );
 
     return upsertTenantMetaData(tenantId, input, metadata);
   }
