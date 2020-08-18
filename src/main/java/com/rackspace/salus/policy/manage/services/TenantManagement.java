@@ -18,6 +18,7 @@ package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
@@ -77,36 +78,53 @@ public class TenantManagement {
   }
 
   /**
-   * Create or update the information stored relating to an individual tenant.
+   * Update the information stored relating to an individual tenant.
    * @param tenantId The tenant to store this data under.
    * @param input The data to alter.
    * @return The full tenant information.
    */
-  public TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
-    Optional<TenantMetadata> metadata = tenantMetadataRepository.findByTenantId(tenantId);
+  public TenantMetadata updateMetadata(String tenantId, TenantMetadataCU input) {
+    log.info("Updating tenant metadata for {}", tenantId);
 
-    TenantMetadata updated;
-    if (metadata.isEmpty()) {
-      log.info("Creating tenant metadata for {}", tenantId);
-      updated = new TenantMetadata()
-        .setTenantId(tenantId);
-    } else {
-      log.info("Updating tenant metadata for {}", tenantId);
-      updated = metadata.get();
+    TenantMetadata metadata = getMetadata(tenantId).orElseGet(() -> {
+      return new TenantMetadata().setTenantId(tenantId);
+    });
+
+    return upsertTenantMetadata(tenantId, input, metadata);
+  }
+
+  /**
+   * Create the information for an individual tenant
+   * @param tenantId
+   * @param input
+   * @return The full tenant information
+   */
+  public TenantMetadata createMetadata(String tenantId, TenantMetadataCU input) {
+    log.info("Creating tenant metadata for {}", tenantId);
+    if(getMetadata(tenantId).isPresent()) {
+      throw new AlreadyExistsException(String.format("Metadata already exists for tenant %s", tenantId));
     }
+
+    TenantMetadata tenantMetadata = new TenantMetadata()
+        .setTenantId(tenantId);
+    return upsertTenantMetadata(tenantId, input, tenantMetadata);
+
+  }
+
+  private TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
 
     PropertyMapper map = PropertyMapper.get();
     map.from(input.getAccountType())
         .whenNonNull()
-        .to(updated::setAccountType);
+        .to(tenantMetadata::setAccountType);
     map.from(input.getMetadata())
         .whenNonNull()
-        .to(updated::setMetadata);
+        .to(tenantMetadata::setMetadata);
 
-    tenantMetadataRepository.save(updated);
+    tenantMetadataRepository.save(tenantMetadata);
     sendTenantChangeEvents(tenantId);
 
-    return updated;
+    return tenantMetadata;
   }
 
   public void removeTenantMetadata(String tenantId) {

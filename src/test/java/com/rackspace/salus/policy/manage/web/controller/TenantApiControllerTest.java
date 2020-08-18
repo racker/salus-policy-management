@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -99,7 +100,7 @@ public class TenantApiControllerTest {
   }
 
   @Test
-  public void testUpsertMetadata() throws Exception {
+  public void testUpdateMetaData() throws Exception {
     TenantMetadata metadata = new TenantMetadata()
         .setId(UUID.fromString("09867b47-2da6-4100-9366-8facf499285a"))
         .setTenantId("MyTenantId")
@@ -108,7 +109,7 @@ public class TenantApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(tenantManagement.upsertTenantMetadata(anyString(), any()))
+    when(tenantManagement.updateMetadata(anyString(), any()))
         .thenReturn(metadata);
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
@@ -123,7 +124,7 @@ public class TenantApiControllerTest {
         .andExpect(content().json(
             readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
 
-    verify(tenantManagement).upsertTenantMetadata(metadata.getTenantId(), createOrUpdate);
+    verify(tenantManagement).updateMetadata(metadata.getTenantId(), createOrUpdate);
     verifyNoMoreInteractions(tenantManagement);
 
   }
@@ -139,5 +140,36 @@ public class TenantApiControllerTest {
 
     verify(tenantManagement).removeTenantMetadata(tenantId);
     verifyNoMoreInteractions(tenantManagement);
+  }
+
+  @Test
+  public void testCreateMetaData() throws Exception {
+    TenantMetadata metadata = new TenantMetadata()
+        .setId(UUID.fromString("09867b47-2da6-4100-9366-8facf499285a"))
+        .setTenantId("MyTenantId")
+        .setAccountType("MyAccountType")
+        .setMetadata(Collections.singletonMap("dummy", "value"))
+        .setCreatedTimestamp(DEFAULT_TIMESTAMP)
+        .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
+
+    when(tenantManagement.createMetadata(anyString(), any()))
+        .thenReturn(metadata);
+
+    TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
+    createOrUpdate.setTenantId("MyTenantId");
+    mvc.perform(post(
+        "/api/admin/tenant-metadata")
+        .content(objectMapper.writeValueAsString(createOrUpdate))
+        .contentType(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(content()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().json(
+            readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
+
+    verify(tenantManagement).createMetadata(metadata.getTenantId(), createOrUpdate);
+    verifyNoMoreInteractions(tenantManagement);
+
   }
 }
