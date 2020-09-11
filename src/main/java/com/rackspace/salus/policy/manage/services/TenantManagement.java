@@ -16,12 +16,15 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import com.rackspace.salus.common.config.MetricNames;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +40,21 @@ public class TenantManagement {
   private final TenantMetadataRepository tenantMetadataRepository;
   private final PolicyEventProducer policyEventProducer;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder tenantManagementSuccess;
+
   @Autowired
   public TenantManagement(
       TenantMetadataRepository tenantMetadataRepository,
-      PolicyEventProducer policyEventProducer) {
+      PolicyEventProducer policyEventProducer,
+      MeterRegistry meterRegistry) {
     this.tenantMetadataRepository = tenantMetadataRepository;
     this.policyEventProducer = policyEventProducer;
+
+    this.meterRegistry = meterRegistry;
+    tenantManagementSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","TenantManagement");
   }
 
   /**
@@ -107,8 +119,9 @@ public class TenantManagement {
 
     TenantMetadata tenantMetadata = new TenantMetadata()
         .setTenantId(tenantId);
-    return upsertTenantMetadata(tenantId, input, tenantMetadata);
-
+    tenantMetadata = upsertTenantMetadata(tenantId, input, tenantMetadata);
+    tenantManagementSuccess.tags("operation","create","objectType","tenantMetadata").register(meterRegistry).increment();
+    return tenantMetadata;
   }
 
   private TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
@@ -123,7 +136,7 @@ public class TenantManagement {
 
     tenantMetadataRepository.save(tenantMetadata);
     sendTenantChangeEvents(tenantId);
-
+    tenantManagementSuccess.tags("operation","upsert","objectType","tenantMetadata").register(meterRegistry).increment();
     return tenantMetadata;
   }
 
@@ -134,6 +147,7 @@ public class TenantManagement {
 
     tenantMetadataRepository.delete(metadata);
     sendTenantChangeEvents(tenantId);
+    tenantManagementSuccess.tags("operation","remove","objectType","tenantMetadata").register(meterRegistry).increment();
   }
 
   private void sendTenantChangeEvents(String tenantId) {

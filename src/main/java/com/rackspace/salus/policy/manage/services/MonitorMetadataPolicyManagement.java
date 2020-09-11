@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import com.rackspace.salus.common.config.MetricNames;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
@@ -28,6 +29,8 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import com.rackspace.salus.telemetry.repositories.MonitorMetadataPolicyRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -56,15 +59,23 @@ public class MonitorMetadataPolicyManagement {
   private final PolicyEventProducer policyEventProducer;
   private final PolicyManagement policyManagement;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder createMonitorMetadataPolicySuccess;
+
   public MonitorMetadataPolicyManagement(
       EntityManager entityManager,
       MonitorMetadataPolicyRepository monitorMetadataPolicyRepository,
       PolicyEventProducer policyEventProducer,
-      PolicyManagement policyManagement) {
+      PolicyManagement policyManagement, MeterRegistry meterRegistry) {
     this.entityManager = entityManager;
     this.monitorMetadataPolicyRepository = monitorMetadataPolicyRepository;
     this.policyEventProducer = policyEventProducer;
     this.policyManagement = policyManagement;
+
+    this.meterRegistry = meterRegistry;
+    createMonitorMetadataPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","MonitorMetadataPolicyManagement");
   }
 
   /**
@@ -133,6 +144,7 @@ public class MonitorMetadataPolicyManagement {
     log.info("Stored new policy {}", policy);
     sendMetadataPolicyEvents(policy);
 
+    createMonitorMetadataPolicySuccess.tags("operation","create","objectType","metadataPolicy").register(meterRegistry).increment();
     return policy;
   }
 
@@ -157,18 +169,20 @@ public class MonitorMetadataPolicyManagement {
         .setValue(String.join(",", zones))
         .setValueType(MetadataValueType.STRING_LIST);
 
-    return createMetadataPolicy(convertedCreate);
+    MonitorMetadataPolicy monitorMetadataPolicy = createMetadataPolicy(convertedCreate);
+    createMonitorMetadataPolicySuccess.tags("operation","create","objectType","zonePolicy").register(meterRegistry).increment();
+    return monitorMetadataPolicy;
   }
 
   public MonitorMetadataPolicy updateZonePolicy(String region, List<String> zones)
       throws AlreadyExistsException, IllegalArgumentException {
-
     MonitorMetadataPolicy policy = getZonePolicy(region).orElseThrow(() ->
         new NotFoundException(String.format("No zone policy found for region %s", region)));
 
     policy.setValue(String.join(",", zones));
     monitorMetadataPolicyRepository.save(policy);
     sendMetadataPolicyEvents(policy);
+    createMonitorMetadataPolicySuccess.tags("operation","update","objectType","zonePolicy").register(meterRegistry).increment();
     return policy;
   }
 
@@ -190,7 +204,7 @@ public class MonitorMetadataPolicyManagement {
     log.info("Policy metadata={} stored with new values={}", id, policy);
 
     sendMetadataPolicyEvents(policy);
-
+    createMonitorMetadataPolicySuccess.tags("operation", "update", "objectType","metadataPolicy").register(meterRegistry).increment();
     return policy;
   }
 
@@ -207,6 +221,7 @@ public class MonitorMetadataPolicyManagement {
     monitorMetadataPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMetadataPolicyEvents(policy);
+    createMonitorMetadataPolicySuccess.tags("operation", "remove", "objectType","metadataPolicy").register(meterRegistry).increment();
   }
 
   public void removeZonePolicy(String region) {
@@ -215,6 +230,7 @@ public class MonitorMetadataPolicyManagement {
 
     log.info("Removed policy {}", policy);
     monitorMetadataPolicyRepository.delete(policy);
+    createMonitorMetadataPolicySuccess.tags("operation", "delete","objectType","zonePolicy").register(meterRegistry).increment();
   }
 
   /**

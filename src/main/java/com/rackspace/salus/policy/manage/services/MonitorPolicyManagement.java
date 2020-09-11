@@ -16,6 +16,7 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import com.rackspace.salus.common.config.MetricNames;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
@@ -27,6 +28,8 @@ import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.repositories.MonitorPolicyRepository;
 import com.rackspace.salus.telemetry.repositories.MonitorRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -53,17 +56,26 @@ public class MonitorPolicyManagement {
   private final PolicyEventProducer policyEventProducer;
   private final PolicyManagement policyManagement;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder monitorPolicySuccess;
+
   @Autowired
   public MonitorPolicyManagement(
       MonitorRepository monitorRepository,
       MonitorPolicyRepository monitorPolicyRepository,
       PolicyEventProducer policyEventProducer,
       TenantManagement tenantManagement,
-      PolicyManagement policyManagement) {
+      PolicyManagement policyManagement,
+      MeterRegistry meterRegistry) {
     this.monitorRepository = monitorRepository;
     this.monitorPolicyRepository = monitorPolicyRepository;
     this.policyEventProducer = policyEventProducer;
     this.policyManagement = policyManagement;
+
+    this.meterRegistry = meterRegistry;
+    monitorPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","MonitorPolicyManagement");
   }
 
   /**
@@ -93,7 +105,7 @@ public class MonitorPolicyManagement {
     monitorPolicyRepository.save(policy);
     log.info("Stored new policy {}", policy);
     sendMonitorPolicyEvents(policy);
-
+    monitorPolicySuccess.tags("operation","create","objectType","monitorPolicy").register(meterRegistry).increment();
     return policy;
   }
 
@@ -116,7 +128,7 @@ public class MonitorPolicyManagement {
 
     monitorPolicyRepository.save(policy);
     sendMonitorPolicyEventsForTenants(policy, allRelevantTenants);
-
+    monitorPolicySuccess.tags("operation","update","objectType","monitorPolicy").register(meterRegistry).increment();
     return policy;
   }
 
@@ -201,6 +213,7 @@ public class MonitorPolicyManagement {
     monitorPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMonitorPolicyEvents(policy);
+    monitorPolicySuccess.tags("operation","remove","objectType","monitorPolicy").register(meterRegistry).increment();
   }
 
   /**
