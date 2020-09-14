@@ -17,6 +17,8 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTagValues;
+import com.rackspace.salus.common.config.MetricTags;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
@@ -75,7 +77,8 @@ public class MonitorPolicyManagement {
     this.policyManagement = policyManagement;
 
     this.meterRegistry = meterRegistry;
-    monitorPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","MonitorPolicyManagement");
+    monitorPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"MonitorPolicyManagement");
   }
 
   /**
@@ -105,7 +108,9 @@ public class MonitorPolicyManagement {
     monitorPolicyRepository.save(policy);
     log.info("Stored new policy {}", policy);
     sendMonitorPolicyEvents(policy);
-    monitorPolicySuccess.tags("operation","create","objectType","monitorPolicy").register(meterRegistry).increment();
+    monitorPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"monitorPolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -128,7 +133,9 @@ public class MonitorPolicyManagement {
 
     monitorPolicyRepository.save(policy);
     sendMonitorPolicyEventsForTenants(policy, allRelevantTenants);
-    monitorPolicySuccess.tags("operation","update","objectType","monitorPolicy").register(meterRegistry).increment();
+    monitorPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.UPDATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"monitorPolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -213,7 +220,9 @@ public class MonitorPolicyManagement {
     monitorPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMonitorPolicyEvents(policy);
-    monitorPolicySuccess.tags("operation","remove","objectType","monitorPolicy").register(meterRegistry).increment();
+    monitorPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"monitorPolicy")
+        .register(meterRegistry).increment();
   }
 
   /**

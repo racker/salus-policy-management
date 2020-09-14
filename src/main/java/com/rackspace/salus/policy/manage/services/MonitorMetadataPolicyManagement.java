@@ -17,6 +17,8 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTagValues;
+import com.rackspace.salus.common.config.MetricTags;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
 import com.rackspace.salus.telemetry.entities.MetadataPolicy;
@@ -75,7 +77,8 @@ public class MonitorMetadataPolicyManagement {
     this.policyManagement = policyManagement;
 
     this.meterRegistry = meterRegistry;
-    createMonitorMetadataPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","MonitorMetadataPolicyManagement");
+    createMonitorMetadataPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"MonitorMetadataPolicyManagement");
   }
 
   /**
@@ -144,7 +147,9 @@ public class MonitorMetadataPolicyManagement {
     log.info("Stored new policy {}", policy);
     sendMetadataPolicyEvents(policy);
 
-    createMonitorMetadataPolicySuccess.tags("operation","create","objectType","metadataPolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -170,7 +175,9 @@ public class MonitorMetadataPolicyManagement {
         .setValueType(MetadataValueType.STRING_LIST);
 
     MonitorMetadataPolicy monitorMetadataPolicy = createMetadataPolicy(convertedCreate);
-    createMonitorMetadataPolicySuccess.tags("operation","create","objectType","zonePolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
     return monitorMetadataPolicy;
   }
 
@@ -182,7 +189,9 @@ public class MonitorMetadataPolicyManagement {
     policy.setValue(String.join(",", zones));
     monitorMetadataPolicyRepository.save(policy);
     sendMetadataPolicyEvents(policy);
-    createMonitorMetadataPolicySuccess.tags("operation","update","objectType","zonePolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.UPDATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -204,7 +213,9 @@ public class MonitorMetadataPolicyManagement {
     log.info("Policy metadata={} stored with new values={}", id, policy);
 
     sendMetadataPolicyEvents(policy);
-    createMonitorMetadataPolicySuccess.tags("operation", "update", "objectType","metadataPolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.UPDATE_OPERATION, MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -221,7 +232,9 @@ public class MonitorMetadataPolicyManagement {
     monitorMetadataPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMetadataPolicyEvents(policy);
-    createMonitorMetadataPolicySuccess.tags("operation", "remove", "objectType","metadataPolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION, MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
   }
 
   public void removeZonePolicy(String region) {
@@ -230,7 +243,9 @@ public class MonitorMetadataPolicyManagement {
 
     log.info("Removed policy {}", policy);
     monitorMetadataPolicyRepository.delete(policy);
-    createMonitorMetadataPolicySuccess.tags("operation", "delete","objectType","zonePolicy").register(meterRegistry).increment();
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
   }
 
   /**

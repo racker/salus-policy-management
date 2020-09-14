@@ -17,6 +17,8 @@
 package com.rackspace.salus.policy.manage.services;
 
 import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTagValues;
+import com.rackspace.salus.common.config.MetricTags;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
@@ -54,7 +56,8 @@ public class TenantManagement {
     this.policyEventProducer = policyEventProducer;
 
     this.meterRegistry = meterRegistry;
-    tenantManagementSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED).tag("service","TenantManagement");
+    tenantManagementSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"TenantManagement");
   }
 
   /**
@@ -102,7 +105,11 @@ public class TenantManagement {
       return new TenantMetadata().setTenantId(tenantId);
     });
 
-    return upsertTenantMetadata(tenantId, input, metadata);
+    TenantMetadata updatedTenantMetadata = upsertTenantMetadata(tenantId, input, metadata);
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.UPDATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
+    return updatedTenantMetadata;
   }
 
   /**
@@ -120,7 +127,9 @@ public class TenantManagement {
     TenantMetadata tenantMetadata = new TenantMetadata()
         .setTenantId(tenantId);
     tenantMetadata = upsertTenantMetadata(tenantId, input, tenantMetadata);
-    tenantManagementSuccess.tags("operation","create","objectType","tenantMetadata").register(meterRegistry).increment();
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
     return tenantMetadata;
   }
 
@@ -136,7 +145,6 @@ public class TenantManagement {
 
     tenantMetadataRepository.save(tenantMetadata);
     sendTenantChangeEvents(tenantId);
-    tenantManagementSuccess.tags("operation","upsert","objectType","tenantMetadata").register(meterRegistry).increment();
     return tenantMetadata;
   }
 
@@ -147,7 +155,9 @@ public class TenantManagement {
 
     tenantMetadataRepository.delete(metadata);
     sendTenantChangeEvents(tenantId);
-    tenantManagementSuccess.tags("operation","remove","objectType","tenantMetadata").register(meterRegistry).increment();
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
   }
 
   private void sendTenantChangeEvents(String tenantId) {
