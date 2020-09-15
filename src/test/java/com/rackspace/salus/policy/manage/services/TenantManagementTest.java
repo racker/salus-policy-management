@@ -31,6 +31,7 @@ import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,8 +40,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -52,7 +51,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
 @Import({TenantManagement.class, DatabaseConfig.class,
-    MetricsAutoConfiguration.class, CompositeMeterRegistryAutoConfiguration.class})
+    SimpleMeterRegistry.class})
 public class TenantManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
