@@ -31,6 +31,7 @@ import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,7 +50,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @RunWith(SpringRunner.class)
 @EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
-@Import({TenantManagement.class, DatabaseConfig.class})
+@Import({TenantManagement.class, DatabaseConfig.class,
+    SimpleMeterRegistry.class})
 public class TenantManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
