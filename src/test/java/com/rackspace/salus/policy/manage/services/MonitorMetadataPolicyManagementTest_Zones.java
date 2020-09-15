@@ -55,6 +55,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -64,7 +66,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
 @Import({PolicyManagement.class, MonitorMetadataPolicyManagement.class,
-    TenantManagement.class, DatabaseConfig.class})
+    TenantManagement.class, DatabaseConfig.class, MetricsAutoConfiguration.class,
+    CompositeMeterRegistryAutoConfiguration.class})
 public class MonitorMetadataPolicyManagementTest_Zones {
 
   @Captor

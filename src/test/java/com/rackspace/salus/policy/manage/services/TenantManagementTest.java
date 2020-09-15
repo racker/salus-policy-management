@@ -39,6 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -49,7 +51,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @RunWith(SpringRunner.class)
 @EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
-@Import({TenantManagement.class, DatabaseConfig.class})
+@Import({TenantManagement.class, DatabaseConfig.class,
+    MetricsAutoConfiguration.class, CompositeMeterRegistryAutoConfiguration.class})
 public class TenantManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
