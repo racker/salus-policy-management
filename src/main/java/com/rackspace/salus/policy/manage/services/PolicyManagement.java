@@ -70,7 +70,7 @@ public class PolicyManagement {
    */
   List<String> getAllDistinctTenantIds() {
     return entityManager
-        .createNamedQuery("Resource.getAllDistinctTenants", String.class)
+        .createNamedQuery("TenantMetadata.getAllDistinctTenants", String.class)
         .getResultList();
   }
 

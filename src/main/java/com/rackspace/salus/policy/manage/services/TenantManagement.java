@@ -16,15 +16,23 @@
 
 package com.rackspace.salus.policy.manage.services;
 
-import com.rackspace.salus.telemetry.entities.TenantMetadata;
-import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
-import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTagValues;
+import com.rackspace.salus.common.config.MetricTags;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
+import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
+import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.model.NotFoundException;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -34,12 +42,22 @@ public class TenantManagement {
   private final TenantMetadataRepository tenantMetadataRepository;
   private final PolicyEventProducer policyEventProducer;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder tenantManagementSuccess;
+
   @Autowired
   public TenantManagement(
       TenantMetadataRepository tenantMetadataRepository,
-      PolicyEventProducer policyEventProducer) {
+      PolicyEventProducer policyEventProducer,
+      MeterRegistry meterRegistry) {
     this.tenantMetadataRepository = tenantMetadataRepository;
     this.policyEventProducer = policyEventProducer;
+
+    this.meterRegistry = meterRegistry;
+    tenantManagementSuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"TenantManagement");
   }
 
   /**
@@ -50,6 +68,15 @@ public class TenantManagement {
   public Optional<TenantMetadata> getMetadata(String tenantId) {
     return tenantMetadataRepository.findByTenantId(tenantId);
   }
+  /**
+   * Gets all known tenant metadata for a single tenant.
+   * @param page The slice of results to be returned.
+   * @return A Page of tenant metadata.
+   */
+  public Page<TenantMetadata> getAllMetadata(Pageable page) {
+    return tenantMetadataRepository.findAll(page);
+  }
+
 
   /**
    * Get the account type value for a tenant if it is set.
@@ -66,36 +93,59 @@ public class TenantManagement {
   }
 
   /**
-   * Create or update the information stored relating to an individual tenant.
+   * Update the information stored relating to an individual tenant.
    * @param tenantId The tenant to store this data under.
    * @param input The data to alter.
    * @return The full tenant information.
    */
-  public TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input) {
-    Optional<TenantMetadata> metadata = tenantMetadataRepository.findByTenantId(tenantId);
+  public TenantMetadata updateMetadata(String tenantId, TenantMetadataCU input) {
+    log.info("Updating tenant metadata for {}", tenantId);
 
-    TenantMetadata updated;
-    if (metadata.isEmpty()) {
-      log.info("Creating tenant metadata for {}", tenantId);
-      updated = new TenantMetadata()
-        .setTenantId(tenantId);
-    } else {
-      log.info("Updating tenant metadata for {}", tenantId);
-      updated = metadata.get();
+    TenantMetadata metadata = getMetadata(tenantId).orElseGet(() -> {
+      return new TenantMetadata().setTenantId(tenantId);
+    });
+
+    TenantMetadata updatedTenantMetadata = upsertTenantMetadata(tenantId, input, metadata);
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.UPDATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
+    return updatedTenantMetadata;
+  }
+
+  /**
+   * Create the information for an individual tenant
+   * @param tenantId
+   * @param input
+   * @return The full tenant information
+   */
+  public TenantMetadata createMetadata(String tenantId, TenantMetadataCU input) {
+    log.info("Creating tenant metadata for {}", tenantId);
+    if(getMetadata(tenantId).isPresent()) {
+      throw new AlreadyExistsException(String.format("Metadata already exists for tenant %s", tenantId));
     }
+
+    TenantMetadata tenantMetadata = new TenantMetadata()
+        .setTenantId(tenantId);
+    tenantMetadata = upsertTenantMetadata(tenantId, input, tenantMetadata);
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
+    return tenantMetadata;
+  }
+
+  private TenantMetadata upsertTenantMetadata(String tenantId, TenantMetadataCU input, TenantMetadata tenantMetadata) {
 
     PropertyMapper map = PropertyMapper.get();
     map.from(input.getAccountType())
         .whenNonNull()
-        .to(updated::setAccountType);
+        .to(tenantMetadata::setAccountType);
     map.from(input.getMetadata())
         .whenNonNull()
-        .to(updated::setMetadata);
+        .to(tenantMetadata::setMetadata);
 
-    tenantMetadataRepository.save(updated);
+    tenantMetadataRepository.save(tenantMetadata);
     sendTenantChangeEvents(tenantId);
-
-    return updated;
+    return tenantMetadata;
   }
 
   public void removeTenantMetadata(String tenantId) {
@@ -105,6 +155,9 @@ public class TenantManagement {
 
     tenantMetadataRepository.delete(metadata);
     sendTenantChangeEvents(tenantId);
+    tenantManagementSuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"tenantMetadata")
+        .register(meterRegistry).increment();
   }
 
   private void sendTenantChangeEvents(String tenantId) {

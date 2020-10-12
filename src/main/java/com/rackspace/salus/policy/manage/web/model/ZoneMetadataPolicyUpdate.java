@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Rackspace US, Inc.
+ * Copyright 2019 Rackspace US, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,13 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
-import com.rackspace.salus.telemetry.model.PolicyScope;
-import com.rackspace.salus.policy.manage.web.model.validator.ValidNewPolicy;
-import java.io.Serializable;
-import java.util.UUID;
-import javax.validation.constraints.NotNull;
+import java.util.List;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import lombok.Data;
-import org.hibernate.validator.constraints.NotBlank;
 
-/**
- * This Object is used for handling the creation of Monitor Policies.
- */
 @Data
-@ValidNewPolicy
-public class MonitorPolicyCreate implements Serializable {
-  @NotNull
-  PolicyScope scope;
-
-  String subscope;
-
-  @NotBlank
-  String name;
-
-  UUID monitorId;
+public class ZoneMetadataPolicyUpdate {
+  @NotEmpty
+  List<String> monitoringZones;
 }

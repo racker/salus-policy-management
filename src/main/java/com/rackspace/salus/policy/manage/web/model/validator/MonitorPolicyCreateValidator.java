@@ -18,9 +18,16 @@ package com.rackspace.salus.policy.manage.web.model.validator;
 
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyCreate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import javax.validation.ConstraintValidatorContext;
 import org.apache.commons.lang3.StringUtils;
 
 public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyCreate> {
+
+  @Override
+  public boolean isValid(MonitorPolicyCreate policy, ConstraintValidatorContext context) {
+    return isValidMonitorId(policy) && super.isValid(policy, context);
+  }
+
   @Override
   protected PolicyScope getScope(MonitorPolicyCreate policy) {
     return policy.getScope();
@@ -29,5 +36,16 @@ public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyC
   @Override
   protected boolean isSubscopeSet(MonitorPolicyCreate policy) {
     return StringUtils.isNotBlank(policy.getSubscope());
+  }
+
+  /**
+   * Validated the monitorId value is correct.
+   * Monitor Id is optional for Tenant policies but required for any other scope.
+   *
+   * @param policy The policy to validate.
+   * @return True if the policy is valid, otherwise false.
+   */
+  private boolean isValidMonitorId(MonitorPolicyCreate policy) {
+    return policy.getScope() == PolicyScope.TENANT || policy.getMonitorId() != null;
   }
 }

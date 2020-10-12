@@ -27,9 +27,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import com.rackspace.salus.policy.manage.config.DatabaseConfig;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
+import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.TenantPolicyChangeEvent;
 import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import com.rackspace.salus.test.EnableTestContainersDatabase;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +50,8 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 @RunWith(SpringRunner.class)
 @EnableTestContainersDatabase
 @DataJpaTest(showSql = false)
-@Import({TenantManagement.class, DatabaseConfig.class})
+@Import({TenantManagement.class, DatabaseConfig.class,
+    SimpleMeterRegistry.class})
 public class TenantManagementTest {
 
   private PodamFactory podamFactory = new PodamFactoryImpl();
@@ -101,7 +104,7 @@ public class TenantManagementTest {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
 
-    TenantMetadata metadata = tenantManagement.upsertTenantMetadata(tenantId, create);
+    TenantMetadata metadata = tenantManagement.createMetadata(tenantId, create);
     assertThat(metadata, notNullValue());
     assertThat(metadata.getId(), notNullValue());
     assertThat(metadata.getTenantId(), equalTo(tenantId));
@@ -126,7 +129,7 @@ public class TenantManagementTest {
         .setAccountType("updated AccountType")
         .setMetadata(newMetadata);
 
-    TenantMetadata metadata = tenantManagement.upsertTenantMetadata(original.getTenantId(), update);
+    TenantMetadata metadata = tenantManagement.updateMetadata(original.getTenantId(), update);
     assertThat(metadata, notNullValue());
     assertThat(metadata.getId(), equalTo(original.getId()));
     assertThat(metadata.getTenantId(), equalTo(original.getTenantId()));
@@ -154,4 +157,34 @@ public class TenantManagementTest {
     verifyNoMoreInteractions(policyEventProducer);
   }
 
+  @Test(expected = AlreadyExistsException.class)
+  public void testCreateTenantMetadata_alreadyExists() {
+    String tenantId = "aaaaaa";
+    TenantMetadataCU create = podamFactory.manufacturePojo(TenantMetadataCU.class);
+
+    TenantMetadata tenantMetadata = podamFactory.manufacturePojo(TenantMetadata.class);
+    tenantMetadata.setTenantId("aaaaaa");
+    tenantMetadataRepository.save(tenantMetadata);
+
+    tenantManagement.createMetadata(tenantId, create);
+  }
+
+  @Test
+  public void testUpdateTenantMetadata_tenantNotFound() {
+    String tenantId = RandomStringUtils.randomAlphabetic(10);
+    TenantMetadataCU update = podamFactory.manufacturePojo(TenantMetadataCU.class);
+
+    TenantMetadata metadata = tenantManagement.updateMetadata(tenantId, update);
+    assertThat(metadata, notNullValue());
+    assertThat(metadata.getId(), notNullValue());
+    assertThat(metadata.getTenantId(), equalTo(tenantId));
+    assertThat(metadata.getAccountType(), equalTo(update.getAccountType()));
+    assertThat(metadata.getMetadata(), equalTo(update.getMetadata()));
+
+    verify(policyEventProducer).sendTenantChangeEvent(
+        new TenantPolicyChangeEvent()
+            .setTenantId(tenantId));
+
+    verifyNoMoreInteractions(policyEventProducer);
+  }
 }

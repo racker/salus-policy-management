@@ -42,6 +42,8 @@ import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +55,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -64,6 +67,7 @@ import uk.co.jemos.podam.api.PodamFactoryImpl;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(MetadataPolicyApiController.class)
+@Import({SimpleMeterRegistry.class})
 public class MetadataPolicyApiControllerTest {
   private PodamFactory podamFactory = new PodamFactoryImpl();
 
@@ -75,6 +79,9 @@ public class MetadataPolicyApiControllerTest {
 
   @MockBean
   MonitorMetadataPolicyManagement monitorMetadataPolicyManagement;
+
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
 
   @Test
   public void testGetById() throws Exception {
@@ -179,6 +186,7 @@ public class MetadataPolicyApiControllerTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setTargetClassName(TargetClassName.Monitor)
+        .setValueType(MetadataValueType.STRING)
         .setKey(RandomStringUtils.randomAlphabetic(10))
         .setValue(RandomStringUtils.randomAlphabetic(10));
 
@@ -215,6 +223,7 @@ public class MetadataPolicyApiControllerTest {
 
     // All we need is a valid update object; doesn't matter what values are set.
     MetadataPolicyUpdate policyUpdate = new MetadataPolicyUpdate()
+        .setValueType(MetadataValueType.STRING)
         .setValue(RandomStringUtils.randomAlphabetic(10));
 
     UUID id = UUID.randomUUID();

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -33,7 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rackspace.salus.telemetry.entities.TenantMetadata;
 import com.rackspace.salus.policy.manage.services.TenantManagement;
 import com.rackspace.salus.policy.manage.web.model.TenantMetadataCU;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import edu.emory.mathcs.backport.java.util.Collections;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +46,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.co.jemos.podam.api.PodamFactory;
@@ -51,6 +55,7 @@ import org.springframework.http.MediaType;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(TenantApiController.class)
+@Import({SimpleMeterRegistry.class})
 public class TenantApiControllerTest {
 
   // A timestamp to be used in tests that translates to "1970-01-02T03:46:40Z"
@@ -67,6 +72,9 @@ public class TenantApiControllerTest {
   @MockBean
   TenantManagement tenantManagement;
 
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
+
   @Test
   public void testGetMetadata() throws Exception {
     TenantMetadata metadata = new TenantMetadata()
@@ -81,7 +89,7 @@ public class TenantApiControllerTest {
         .thenReturn(Optional.of(metadata));
 
     mvc.perform(get(
-        "/api/public/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/tenant-metadata/{tenantId}", metadata.getTenantId())
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
@@ -95,7 +103,7 @@ public class TenantApiControllerTest {
   }
 
   @Test
-  public void testUpsertMetadata() throws Exception {
+  public void testUpdateMetaData() throws Exception {
     TenantMetadata metadata = new TenantMetadata()
         .setId(UUID.fromString("09867b47-2da6-4100-9366-8facf499285a"))
         .setTenantId("MyTenantId")
@@ -104,12 +112,12 @@ public class TenantApiControllerTest {
         .setCreatedTimestamp(DEFAULT_TIMESTAMP)
         .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
 
-    when(tenantManagement.upsertTenantMetadata(anyString(), any()))
+    when(tenantManagement.updateMetadata(anyString(), any()))
         .thenReturn(metadata);
 
     TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
     mvc.perform(put(
-        "/api/public/account/{tenantId}", metadata.getTenantId())
+        "/api/admin/tenant-metadata/{tenantId}", metadata.getTenantId())
         .content(objectMapper.writeValueAsString(createOrUpdate))
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
@@ -119,7 +127,7 @@ public class TenantApiControllerTest {
         .andExpect(content().json(
             readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
 
-    verify(tenantManagement).upsertTenantMetadata(metadata.getTenantId(), createOrUpdate);
+    verify(tenantManagement).updateMetadata(metadata.getTenantId(), createOrUpdate);
     verifyNoMoreInteractions(tenantManagement);
 
   }
@@ -128,12 +136,43 @@ public class TenantApiControllerTest {
   public void testRemoveMetadata() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     mvc.perform(delete(
-        "/api/public/account/{tenantId}", tenantId)
+        "/api/admin/tenant-metadata/{tenantId}", tenantId)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isNoContent());
 
     verify(tenantManagement).removeTenantMetadata(tenantId);
     verifyNoMoreInteractions(tenantManagement);
+  }
+
+  @Test
+  public void testCreateMetaData() throws Exception {
+    TenantMetadata metadata = new TenantMetadata()
+        .setId(UUID.fromString("09867b47-2da6-4100-9366-8facf499285a"))
+        .setTenantId("MyTenantId")
+        .setAccountType("MyAccountType")
+        .setMetadata(Collections.singletonMap("dummy", "value"))
+        .setCreatedTimestamp(DEFAULT_TIMESTAMP)
+        .setUpdatedTimestamp(DEFAULT_TIMESTAMP);
+
+    when(tenantManagement.createMetadata(anyString(), any()))
+        .thenReturn(metadata);
+
+    TenantMetadataCU createOrUpdate = podamFactory.manufacturePojo(TenantMetadataCU.class);
+    createOrUpdate.setTenantId("MyTenantId");
+    mvc.perform(post(
+        "/api/admin/tenant-metadata")
+        .content(objectMapper.writeValueAsString(createOrUpdate))
+        .contentType(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(content()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().json(
+            readContent("TenantApiControllerTest/basic_tenant_metadata.json"), true));
+
+    verify(tenantManagement).createMetadata(metadata.getTenantId(), createOrUpdate);
+    verifyNoMoreInteractions(tenantManagement);
+
   }
 }

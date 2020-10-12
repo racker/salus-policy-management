@@ -16,7 +16,15 @@
 
 package com.rackspace.salus.policy.manage.web.client;
 
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_MONITOR_IDS;
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_MONITOR_METADATA;
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_MONITOR_METADATA_MAP;
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_POLICIES;
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_POLICY_IDS;
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_ZONE_METADATA;
+
 import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
@@ -59,8 +67,10 @@ import org.springframework.web.util.UriComponentsBuilder;
  * </p>
  */
 public class PolicyApiClient implements PolicyApi {
+  private static final ParameterizedTypeReference<List<MonitorPolicyDTO>> LIST_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<MonitorMetadataPolicyDTO>> LIST_OF_MONITOR_METADATA_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<UUID>> LIST_OF_UUID = new ParameterizedTypeReference<>() {};
+  private static final ParameterizedTypeReference<List<String>> LIST_OF_STRING = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<Map<String, MonitorMetadataPolicyDTO>> MAP_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private final RestTemplate restTemplate;
 
@@ -68,14 +78,33 @@ public class PolicyApiClient implements PolicyApi {
     this.restTemplate = restTemplate;
   }
 
-  @CacheEvict(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
+  @CacheEvict(cacheNames = CACHE_POLICIES, key = "#tenantId",
       condition = "!#useCache", beforeInvocation = true)
-  @Cacheable(cacheNames = "policymgmt_policy_monitor_ids", key = "#tenantId",
+  @Cacheable(cacheNames = CACHE_POLICIES, key = "#tenantId",
       condition = "#useCache")
-  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
+  public List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
-        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/ids")
-        .build(tenantId)
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}")
+        .buildAndExpand(tenantId)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_MONITOR_POLICY
+    ).getBody();
+  }
+
+  @CacheEvict(cacheNames = CACHE_POLICY_IDS, key = "#tenantId",
+      condition = "!#useCache", beforeInvocation = true)
+  @Cacheable(cacheNames = CACHE_POLICY_IDS, key = "#tenantId",
+      condition = "#useCache")
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean includeNullMonitors, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/policy-ids")
+        .queryParam("includeNullMonitors", includeNullMonitors)
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -86,15 +115,33 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
-  @CacheEvict(cacheNames = "policymgmt_monitor_metadata_policies", key = "#tenantId",
+  @CacheEvict(cacheNames = CACHE_MONITOR_IDS, key = "#tenantId",
       condition = "!#useCache", beforeInvocation = true)
-  @Cacheable(cacheNames = "policymgmt_monitor_metadata_policies", key = "#tenantId",
+  @Cacheable(cacheNames = CACHE_MONITOR_IDS, key = "#tenantId",
+      condition = "#useCache")
+  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/monitors/effective/{tenantId}/monitor-ids")
+        .buildAndExpand(tenantId)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_UUID
+    ).getBody();
+  }
+
+  @CacheEvict(cacheNames = CACHE_MONITOR_METADATA, key = "#tenantId",
+      condition = "!#useCache", beforeInvocation = true)
+  @Cacheable(cacheNames = CACHE_MONITOR_METADATA, key = "#tenantId",
       condition = "#useCache")
   public List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(
       String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}")
-        .build(tenantId)
+        .buildAndExpand(tenantId)
         .toString();
 
     return restTemplate.exchange(
@@ -105,15 +152,15 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
-  @CacheEvict(cacheNames = "policymgmt_monitor_metadata_map", key = "{#tenantId, #className, #monitorType}",
+  @CacheEvict(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
       condition = "!#useCache", beforeInvocation = true)
-  @Cacheable(cacheNames = "policymgmt_monitor_metadata_map", key = "{#tenantId, #className, #monitorType}",
+  @Cacheable(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
       condition = "#useCache")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
-        .build(tenantId, className, monitorType)
+        .buildAndExpand(tenantId, className, monitorType)
         .toString();
 
     return restTemplate.exchange(
@@ -121,6 +168,23 @@ public class PolicyApiClient implements PolicyApi {
         HttpMethod.GET,
         null,
         MAP_OF_MONITOR_POLICY
+    ).getBody();
+  }
+
+  @CacheEvict(cacheNames = CACHE_ZONE_METADATA, key = "#region", condition = "!#useCache",
+      beforeInvocation = true)
+  @Cacheable(cacheNames = CACHE_ZONE_METADATA, key = "#region", condition = "#useCache")
+  public List<String> getDefaultMonitoringZones(String region, boolean useCache) {
+    final String uri = UriComponentsBuilder
+        .fromPath("/api/admin/policy/metadata/zones/{region}")
+        .buildAndExpand(region)
+        .toString();
+
+    return restTemplate.exchange(
+        uri,
+        HttpMethod.GET,
+        null,
+        LIST_OF_STRING
     ).getBody();
   }
 }

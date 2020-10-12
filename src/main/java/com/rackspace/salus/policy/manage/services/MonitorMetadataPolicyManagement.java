@@ -16,16 +16,25 @@
 
 package com.rackspace.salus.policy.manage.services;
 
-import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
+import com.rackspace.salus.common.config.MetricNames;
+import com.rackspace.salus.common.config.MetricTagValues;
+import com.rackspace.salus.common.config.MetricTags;
 import com.rackspace.salus.policy.manage.web.model.MetadataPolicyUpdate;
+import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyCreate;
+import com.rackspace.salus.telemetry.entities.MetadataPolicy;
 import com.rackspace.salus.telemetry.entities.MonitorMetadataPolicy;
 import com.rackspace.salus.telemetry.errors.AlreadyExistsException;
 import com.rackspace.salus.telemetry.messaging.MetadataPolicyEvent;
+import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.NotFoundException;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.model.TargetClassName;
 import com.rackspace.salus.telemetry.repositories.MonitorMetadataPolicyRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -52,19 +61,29 @@ public class MonitorMetadataPolicyManagement {
   private final PolicyEventProducer policyEventProducer;
   private final PolicyManagement policyManagement;
 
+  MeterRegistry meterRegistry;
+
+  // metrics counters
+  private final Counter.Builder createMonitorMetadataPolicySuccess;
+
   public MonitorMetadataPolicyManagement(
       EntityManager entityManager,
       MonitorMetadataPolicyRepository monitorMetadataPolicyRepository,
       PolicyEventProducer policyEventProducer,
-      PolicyManagement policyManagement) {
+      PolicyManagement policyManagement, MeterRegistry meterRegistry) {
     this.entityManager = entityManager;
     this.monitorMetadataPolicyRepository = monitorMetadataPolicyRepository;
     this.policyEventProducer = policyEventProducer;
     this.policyManagement = policyManagement;
+
+    this.meterRegistry = meterRegistry;
+    createMonitorMetadataPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
+        .tag(MetricTags.SERVICE_METRIC_TAG,"MonitorMetadataPolicyManagement");
   }
 
   /**
    * Gets the full policy details with the provided id.
+   *
    * @param id The id of the policy to retrieve.
    * @return The full policy details.
    */
@@ -74,11 +93,18 @@ public class MonitorMetadataPolicyManagement {
 
   /**
    * Returns all the metadata policies configured.
+   *
    * @param page The slice of results to be returned.
    * @return A Page of metadata policies.
    */
   public Page<MonitorMetadataPolicy> getAllMetadataPolicies(Pageable page) {
     return monitorMetadataPolicyRepository.findAll(page);
+  }
+
+  public Optional<MonitorMetadataPolicy> getZonePolicy(String region) {
+    return monitorMetadataPolicyRepository
+        .findByScopeAndTargetClassNameAndKey(
+            PolicyScope.GLOBAL, TargetClassName.RemotePlugin, MetadataPolicy.ZONE_METADATA_PREFIX + region);
   }
 
   /**
@@ -94,7 +120,8 @@ public class MonitorMetadataPolicyManagement {
     if (exists(create)) {
       throw new AlreadyExistsException(String.format("Policy already exists with "
               + "scope:subscope:class:type:key of %s:%s:%s:%s:%s",
-          create.getScope(), create.getSubscope(), create.getTargetClassName(), create.getMonitorType(), create.getKey()));
+          create.getScope(), create.getSubscope(), create.getTargetClassName(),
+          create.getMonitorType(), create.getKey()));
     }
 
     MonitorMetadataPolicy policy;
@@ -120,6 +147,51 @@ public class MonitorMetadataPolicyManagement {
     log.info("Stored new policy {}", policy);
     sendMetadataPolicyEvents(policy);
 
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
+    return policy;
+  }
+
+  /**
+   * A helper method to create a monitor metadata entry in the database
+   * specifically for monitoring zone regions.
+   *
+   * @param region The region to create a policy for.
+   * @param zones The zones to be used for the provided region.
+   * @return The full details of the saved policy.
+   * @throws AlreadyExistsException if an equivalent policy already exists.
+   * @throws IllegalArgumentException if the parameters provided are not valid.
+   */
+  public MonitorMetadataPolicy createZonePolicy(String region, List<String> zones)
+      throws AlreadyExistsException, IllegalArgumentException {
+
+    MonitorMetadataPolicyCreate convertedCreate = (MonitorMetadataPolicyCreate) new MonitorMetadataPolicyCreate()
+        .setScope(PolicyScope.GLOBAL)
+        .setSubscope(null)
+        .setKey(MetadataPolicy.ZONE_METADATA_PREFIX + region)
+        .setTargetClassName(TargetClassName.RemotePlugin)
+        .setValue(String.join(",", zones))
+        .setValueType(MetadataValueType.STRING_LIST);
+
+    MonitorMetadataPolicy monitorMetadataPolicy = createMetadataPolicy(convertedCreate);
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.CREATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
+    return monitorMetadataPolicy;
+  }
+
+  public MonitorMetadataPolicy updateZonePolicy(String region, List<String> zones)
+      throws AlreadyExistsException, IllegalArgumentException {
+    MonitorMetadataPolicy policy = getZonePolicy(region).orElseThrow(() ->
+        new NotFoundException(String.format("No zone policy found for region %s", region)));
+
+    policy.setValue(String.join(",", zones));
+    monitorMetadataPolicyRepository.save(policy);
+    sendMetadataPolicyEvents(policy);
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG,MetricTagValues.UPDATE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
@@ -141,12 +213,15 @@ public class MonitorMetadataPolicyManagement {
     log.info("Policy metadata={} stored with new values={}", id, policy);
 
     sendMetadataPolicyEvents(policy);
-
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.UPDATE_OPERATION, MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
     return policy;
   }
 
   /**
    * Removes the metadata policy from the database and sends policy events for each tenant.
+   *
    * @param id The id of the policy to remove.
    */
   public void removeMetadataPolicy(UUID id) {
@@ -157,10 +232,25 @@ public class MonitorMetadataPolicyManagement {
     monitorMetadataPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
     sendMetadataPolicyEvents(policy);
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION, MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
+        .register(meterRegistry).increment();
+  }
+
+  public void removeZonePolicy(String region) {
+    MonitorMetadataPolicy policy = getZonePolicy(region).orElseThrow(() ->
+        new NotFoundException(String.format("No zone policy found for region %s", region)));
+
+    log.info("Removed policy {}", policy);
+    monitorMetadataPolicyRepository.delete(policy);
+    createMonitorMetadataPolicySuccess
+        .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION,MetricTags.OBJECT_TYPE_METRIC_TAG,"zonePolicy")
+        .register(meterRegistry).increment();
   }
 
   /**
    * Sends metadata policy events for all potentially relevant tenants.
+   *
    * @param policy The MetadataPolicy to distribute out to all tenants.
    */
   private void sendMetadataPolicyEvents(MonitorMetadataPolicy policy) {
@@ -182,7 +272,8 @@ public class MonitorMetadataPolicyManagement {
    * the provided tenant.
    *
    * @param tenantId The tenantId to retrieve policies for.
-   * @return The list of effective metadata policies that should be applied to the tenant's resources.
+   * @return The list of effective metadata policies that should be applied to the tenant's
+   * resources.
    */
   public List<MonitorMetadataPolicy> getEffectiveMetadataPoliciesForTenant(String tenantId) {
     return
@@ -195,7 +286,8 @@ public class MonitorMetadataPolicyManagement {
                 // First group the policies by monitor type and key
                 Collectors.groupingBy(policy -> Pair.of(policy.getMonitorType(), policy.getKey()),
                     // then filter each group by only retrieving the one with the highest priority
-                    Collectors.maxBy(Comparator.comparingInt(policy -> policy.getScope().getPriority())))
+                    Collectors
+                        .maxBy(Comparator.comparingInt(policy -> policy.getScope().getPriority())))
             )
             // Now we have a map of policy name -> (optional) metadata policy
             .values().stream()
@@ -205,7 +297,8 @@ public class MonitorMetadataPolicyManagement {
             .collect(Collectors.toList());
   }
 
-  public Map<String, MonitorMetadataPolicy> getMetadataPoliciesForTenantAndType(String tenantId, TargetClassName className, MonitorType monitorType) {
+  public Map<String, MonitorMetadataPolicy> getMetadataPoliciesForTenantAndType(String tenantId,
+      TargetClassName className, MonitorType monitorType) {
     List<MonitorMetadataPolicy> listOfPolicies = getEffectiveMetadataPoliciesForTenant(tenantId);
 
     Map<String, MonitorMetadataPolicy> policyValuesMap = new HashMap<>();
@@ -222,6 +315,21 @@ public class MonitorMetadataPolicyManagement {
       }
     }
     return policyValuesMap;
+  }
+
+  public List<String> getDefaultMonitoringZones(String region) {
+    if (region == null || region.isBlank()) {
+      region = MetadataPolicy.DEFAULT_ZONE;
+    }
+    log.debug("Getting default zones for region={}", region);
+
+    Optional<MonitorMetadataPolicy> policy = monitorMetadataPolicyRepository
+        .findByScopeAndTargetClassNameAndKey(
+            PolicyScope.GLOBAL, TargetClassName.RemotePlugin, MetadataPolicy.ZONE_METADATA_PREFIX + region);
+
+    return policy.map(
+        monitorMetadataPolicy -> Arrays.asList(monitorMetadataPolicy.getValue().split("\\s*,\\s*")))
+        .orElse(Collections.emptyList());
   }
 
   /**
@@ -248,7 +356,11 @@ public class MonitorMetadataPolicyManagement {
    */
   private List<String> getTenantsForMetadataPolicy(MonitorMetadataPolicy policy) {
     List<String> tenantsUsingPolicyKey;
-    if (policy.getTargetClassName().equals(TargetClassName.Monitor)) {
+    if (policy.getKey().startsWith(MetadataPolicy.ZONE_METADATA_PREFIX)) {
+      tenantsUsingPolicyKey = entityManager
+          .createNamedQuery("Monitor.getTenantsUsingZoneMetadata", String.class)
+          .getResultList();
+    } else if (policy.getTargetClassName().equals(TargetClassName.Monitor)) {
       tenantsUsingPolicyKey = entityManager
           .createNamedQuery("Monitor.getTenantsUsingPolicyMetadataInMonitor", String.class)
           .setParameter("metadataKey", policy.getKey())

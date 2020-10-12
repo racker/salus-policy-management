@@ -27,6 +27,7 @@ import com.rackspace.salus.policy.manage.web.model.MonitorMetadataPolicyDTO;
 import com.rackspace.salus.telemetry.model.MetadataValueType;
 import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.TargetClassName;
+import com.rackspace.salus.telemetry.repositories.TenantMetadataRepository;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +36,7 @@ import org.springframework.boot.autoconfigure.cache.CacheType;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -69,6 +71,9 @@ public class PolicyApiClientTest {
   @Autowired
   PolicyApi policyApiClient;
 
+  @MockBean
+  TenantMetadataRepository tenantMetadataRepository;
+
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
@@ -88,7 +93,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT2S"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
@@ -127,7 +132,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT2S"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     mockServer.expect(ExpectedCount.twice(),
         requestTo(String.format(
@@ -174,7 +179,7 @@ public class PolicyApiClientTest {
             .setValueType(MetadataValueType.DURATION)
             .setValue("PT1M"));
 
-    String tenantId = RandomStringUtils.randomAlphanumeric(10);
+    String tenantId = "hybrid:123456";
 
     // only one of the three requests will hit the cache
     mockServer.expect(ExpectedCount.twice(),

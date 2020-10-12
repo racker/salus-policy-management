@@ -36,6 +36,13 @@ import org.springframework.context.annotation.Configuration;
 @EnableCaching
 public class PolicyApiCacheConfig {
 
+  public static final String CACHE_POLICIES = "policymgmt_monitor_policies";
+  public static final String CACHE_POLICY_IDS = "policymgmt_monitor_policy_ids";
+  public static final String CACHE_MONITOR_IDS = "policymgmt_policy_monitor_ids";
+  public static final String CACHE_MONITOR_METADATA = "policymgmt_monitor_metadata_policies";
+  public static final String CACHE_MONITOR_METADATA_MAP = "policymgmt_monitor_metadata_map";
+  public static final String CACHE_ZONE_METADATA = "policymgmt_zone_metadata";
+
   private final PolicyApiCacheProperties properties;
 
   @Autowired
@@ -46,10 +53,12 @@ public class PolicyApiCacheConfig {
   @Bean
   public JCacheManagerCustomizer policyManagementCacheCustomizer() {
     return cacheManager -> {
-      cacheManager.createCache("policymgmt_monitor_policies", policiesCacheConfig());
-      cacheManager.createCache("policymgmt_policy_monitor_ids", policiesCacheConfig());
-      cacheManager.createCache("policymgmt_monitor_metadata_policies", metadataCacheConfig());
-      cacheManager.createCache("policymgmt_monitor_metadata_map", metadataCacheConfig());
+      cacheManager.createCache(CACHE_POLICIES, policiesCacheConfig());
+      cacheManager.createCache(CACHE_POLICY_IDS, policiesCacheConfig());
+      cacheManager.createCache(CACHE_MONITOR_IDS, policiesCacheConfig());
+      cacheManager.createCache(CACHE_MONITOR_METADATA, metadataCacheConfig());
+      cacheManager.createCache(CACHE_MONITOR_METADATA_MAP, metadataCacheConfig());
+      cacheManager.createCache(CACHE_ZONE_METADATA, metadataCacheConfig());
     };
   }
 

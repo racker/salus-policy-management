@@ -16,12 +16,14 @@
 
 package com.rackspace.salus.policy.manage.web.model;
 
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 
 @Data
 public class TenantMetadataCU {
+  String tenantId; // only used in POST requests
   String accountType;
-  Map<String,String> metadata;
+  Map<String,String> metadata = new HashMap<>();
 
 }
