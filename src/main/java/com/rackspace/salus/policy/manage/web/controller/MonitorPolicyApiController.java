@@ -76,9 +76,9 @@ public class MonitorPolicyApiController {
 
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/monitor-ids")
   @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Policy Monitor ids retrieved")})
-  public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
-    return monitorPolicyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor Policy ids retrieved")})
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(@PathVariable String tenantId) {
+    return monitorPolicyManagement.getEffectiveMonitorPolicyIdsForTenant(tenantId);
   }
 
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/policy-ids")

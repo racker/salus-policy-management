@@ -148,7 +148,7 @@ public class MonitorPolicyManagement {
     return monitorPolicyRepository.findById(id);
   }
 
-  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId) {
+  public List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId) {
     return getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream()
         .map(MonitorPolicy::getMonitorId)

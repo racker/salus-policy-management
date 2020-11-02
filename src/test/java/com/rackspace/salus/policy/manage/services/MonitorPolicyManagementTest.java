@@ -147,7 +147,7 @@ public class MonitorPolicyManagementTest {
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     // Store a default tenant in the db for that account type
     tenantMetadataRepository.save(new TenantMetadata()
@@ -223,7 +223,7 @@ public class MonitorPolicyManagementTest {
   @Test
   public void testCreateMonitorPolicy_multipleTenants() {
     List<String> tenantIds = TestUtility.createMultipleTenants(tenantMetadataRepository);
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
@@ -313,7 +313,7 @@ public class MonitorPolicyManagementTest {
    */
   @Test
   public void testPolicyEvent_monitorExistsAfterCreate() {
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);

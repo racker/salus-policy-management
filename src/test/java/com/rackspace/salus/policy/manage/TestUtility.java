@@ -33,7 +33,7 @@ public class TestUtility {
 
   private static PodamFactory podamFactory = new PodamFactoryImpl();
 
-  public static Monitor createPolicyMonitor(MonitorRepository monitorRepository) {
+  public static Monitor createPolicyTemplate(MonitorRepository monitorRepository) {
     Monitor monitor = podamFactory.manufacturePojo(Monitor.class);
     monitor.setTenantId(Monitor.POLICY_TENANT);
     monitor.setInterval(Duration.ofSeconds(60));
