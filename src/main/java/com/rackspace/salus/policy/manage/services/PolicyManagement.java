@@ -16,17 +16,24 @@
 
 package com.rackspace.salus.policy.manage.services;
 
+import static com.rackspace.salus.policy.manage.web.client.PolicyApiCacheConfig.CACHE_MONITOR_METADATA_MAP;
+
 import com.rackspace.salus.telemetry.entities.Policy;
+import com.rackspace.salus.telemetry.model.MonitorType;
 import com.rackspace.salus.telemetry.model.PolicyScope;
+import com.rackspace.salus.telemetry.model.TargetClassName;
 import com.rackspace.salus.telemetry.repositories.PolicyRepository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class PolicyManagement {
 
   private final PolicyRepository policyRepository;
@@ -94,5 +101,11 @@ public class PolicyManagement {
     return policy.getScope().equals(PolicyScope.GLOBAL) ||
         (policy.getScope().equals(PolicyScope.ACCOUNT_TYPE) && policy.getSubscope().equals(accountType)) ||
         (policy.getScope().equals(PolicyScope.TENANT) && policy.getSubscope().equals(tenantId));
+  }
+
+  @CacheEvict(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
+      beforeInvocation = true)
+  public void removePolicyFromCache(String tenantId, TargetClassName className, MonitorType monitorType) {
+    log.info("cache removed for tenantId={}, className={}, monitorType={} ", tenantId, className, monitorType);
   }
 }

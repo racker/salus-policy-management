@@ -30,6 +30,7 @@ import com.rackspace.salus.telemetry.model.TargetClassName;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
@@ -66,6 +67,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  *   <code>&#64;Import</code> {@link PolicyApiCacheConfig} on a config bean declaring the client bean.
  * </p>
  */
+@Slf4j
 public class PolicyApiClient implements PolicyApi {
   private static final ParameterizedTypeReference<List<MonitorPolicyDTO>> LIST_OF_MONITOR_POLICY = new ParameterizedTypeReference<>() {};
   private static final ParameterizedTypeReference<List<MonitorMetadataPolicyDTO>> LIST_OF_MONITOR_METADATA_POLICY = new ParameterizedTypeReference<>() {};
@@ -158,6 +160,7 @@ public class PolicyApiClient implements PolicyApi {
       condition = "#useCache")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
+    log.info("cache added for tenantId={}, className={}, monitorType={} ", tenantId, className, monitorType);
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
         .buildAndExpand(tenantId, className, monitorType)
