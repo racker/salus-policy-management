@@ -236,8 +236,6 @@ public class MonitorMetadataPolicyManagement {
 
     monitorMetadataPolicyRepository.deleteById(id);
     log.info("Removed policy {}", policy);
-    policyManagement.getTenantsForPolicy(policy)
-        .forEach(e -> policyManagement.removePolicyFromCache(e, policy.getTargetClassName(), policy.getMonitorType()));
     sendMetadataPolicyEvents(policy);
     createMonitorMetadataPolicySuccess
         .tags(MetricTags.OPERATION_METRIC_TAG, MetricTagValues.REMOVE_OPERATION, MetricTags.OBJECT_TYPE_METRIC_TAG,"metadataPolicy")
@@ -267,8 +265,10 @@ public class MonitorMetadataPolicyManagement {
 
     tenantIds.stream()
         .map(tenantId -> new MetadataPolicyEvent()
-            .setPolicyId(policy.getId())
-            .setTenantId(tenantId))
+            .setMonitorType(policy.getMonitorType())
+            .setTargetClassName(policy.getTargetClassName())
+            .setTenantId(tenantId)
+            .setPolicyId(policy.getId()))
         .forEach(policyEventProducer::sendPolicyEvent);
   }
 

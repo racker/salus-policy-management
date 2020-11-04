@@ -160,7 +160,6 @@ public class PolicyApiClient implements PolicyApi {
       condition = "#useCache")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
-    log.info("cache added for tenantId={}, className={}, monitorType={} ", tenantId, className, monitorType);
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/metadata/monitor/effective/{tenantId}/{className}/{monitorType}")
         .buildAndExpand(tenantId, className, monitorType)

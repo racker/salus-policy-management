@@ -189,6 +189,8 @@ public class MonitorMetadataPolicyManagementTest {
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.Monitor)
+            .setMonitorType(MonitorType.ping)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -224,6 +226,8 @@ public class MonitorMetadataPolicyManagementTest {
 
     List<MetadataPolicyEvent> expected = tenantIds.stream()
         .map(t -> (MetadataPolicyEvent) new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.Monitor)
+            .setMonitorType(MonitorType.ssl)
             .setPolicyId(policy.getId())
             .setTenantId(t)).collect(Collectors.toList());
 
@@ -261,6 +265,8 @@ public class MonitorMetadataPolicyManagementTest {
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.Monitor)
+            .setMonitorType(MonitorType.net_response)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -323,6 +329,8 @@ public class MonitorMetadataPolicyManagementTest {
     // Verify the Policy Event looks correct
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.Monitor)
+            .setMonitorType(MonitorType.ping)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -496,6 +504,8 @@ public class MonitorMetadataPolicyManagementTest {
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.Monitor)
+            .setMonitorType(MonitorType.disk)
             .setPolicyId(saved.getId())
             .setTenantId(tenantId)
     ));

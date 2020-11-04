@@ -145,6 +145,7 @@ public class MonitorMetadataPolicyManagementTest_Zones {
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.RemotePlugin)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -171,6 +172,7 @@ public class MonitorMetadataPolicyManagementTest_Zones {
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
     assertThat(policyEventArg.getValue(), equalTo(
         new MetadataPolicyEvent()
+            .setTargetClassName(TargetClassName.RemotePlugin)
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
