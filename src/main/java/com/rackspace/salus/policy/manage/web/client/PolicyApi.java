@@ -38,4 +38,6 @@ public interface PolicyApi {
   Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache);
   List<String> getDefaultMonitoringZones(String region, boolean useCache);
+  void evictEffectiveMonitorMetadataMap(String tenantId, TargetClassName className,
+      MonitorType monitorType);
 }

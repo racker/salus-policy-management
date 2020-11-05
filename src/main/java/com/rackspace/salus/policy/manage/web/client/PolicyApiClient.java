@@ -154,10 +154,7 @@ public class PolicyApiClient implements PolicyApi {
     ).getBody();
   }
 
-  @CacheEvict(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
-      condition = "!#useCache", beforeInvocation = true)
-  @Cacheable(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
-      condition = "#useCache")
+  @Cacheable(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}")
   public Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache) {
     final String uri = UriComponentsBuilder
@@ -171,6 +168,11 @@ public class PolicyApiClient implements PolicyApi {
         null,
         MAP_OF_MONITOR_POLICY
     ).getBody();
+  }
+
+  @CacheEvict(cacheNames = CACHE_MONITOR_METADATA_MAP, key = "{#tenantId, #className, #monitorType}",
+       beforeInvocation = true)
+  public void evictEffectiveMonitorMetadataMap(String tenantId, TargetClassName className, MonitorType monitorType)  {
   }
 
   @CacheEvict(cacheNames = CACHE_ZONE_METADATA, key = "#region", condition = "!#useCache",

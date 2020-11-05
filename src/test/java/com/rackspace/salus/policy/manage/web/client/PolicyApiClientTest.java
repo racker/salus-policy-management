@@ -133,7 +133,7 @@ public class PolicyApiClientTest {
 
     String tenantId = "hybrid:123456";
 
-    mockServer.expect(ExpectedCount.twice(),
+    mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
             "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
         .andRespond(withSuccess(
@@ -144,6 +144,8 @@ public class PolicyApiClientTest {
         tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
 
     assertThat(policies, equalTo(expectedPolicy));
+
+    policyApiClient.evictEffectiveMonitorMetadataMap(tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     // running the same request again should bypass the cache and perform a full request
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
@@ -181,7 +183,7 @@ public class PolicyApiClientTest {
     String tenantId = "hybrid:123456";
 
     // only one of the three requests will hit the cache
-    mockServer.expect(ExpectedCount.twice(),
+    mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
             "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
         .andRespond(withSuccess(
@@ -199,6 +201,8 @@ public class PolicyApiClientTest {
         tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
 
     assertThat(policies, equalTo(expectedPingPolicy));
+
+    policyApiClient.evictEffectiveMonitorMetadataMap(tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     // make the same request bypassing the cache
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
