@@ -95,12 +95,12 @@ public class MonitorPolicyManagement {
       throw new AlreadyExistsException(String.format("Policy already exists with scope:subscope:name of %s:%s:%s",
           create.getScope(), create.getSubscope(), create.getName()));
     }
-    if (!isValidMonitorId(create.getMonitorId())) {
-      throw new IllegalArgumentException(String.format("Invalid monitor id provided: %s",
-          create.getMonitorId()));
+    if (!isValidMonitorId(create.getMonitorTemplateId())) {
+      throw new IllegalArgumentException(String.format("Invalid monitor template id provided: %s",
+          create.getMonitorTemplateId()));
     }
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId(create.getMonitorId())
+        .setMonitorTemplateId(create.getMonitorTemplateId())
         .setName(create.getName())
         .setSubscope(create.getSubscope())
         .setScope(create.getScope());
@@ -148,10 +148,10 @@ public class MonitorPolicyManagement {
     return monitorPolicyRepository.findById(id);
   }
 
-  public List<UUID> getEffectiveMonitorIdsUsingMonitorPoliciesForTenant(String tenantId) {
+  public List<UUID> getEffectiveMonitorTemplateIdsForTenant(String tenantId) {
     return getEffectiveMonitorPoliciesForTenant(tenantId)
         .stream()
-        .map(MonitorPolicy::getMonitorId)
+        .map(MonitorPolicy::getMonitorTemplateId)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
@@ -161,7 +161,7 @@ public class MonitorPolicyManagement {
         .stream()
         .filter(p -> {
           if (!includeNullMonitors) {
-            return p.getMonitorId() != null;
+            return p.getMonitorTemplateId() != null;
           }
           return true;
         })
@@ -257,13 +257,13 @@ public class MonitorPolicyManagement {
   private void sendMonitorPolicyEventsForTenants(MonitorPolicy policy, Collection<String> tenantIds) {
     log.info("Sending {} monitor policy events for {}", tenantIds.size(), policy);
 
-    if (policy.getMonitorId() == null) {
+    if (policy.getMonitorTemplateId() == null) {
       log.debug("Sending opt-out event for policy={}", policy);
     }
 
     tenantIds.stream()
         .map(tenantId -> new MonitorPolicyEvent()
-            .setMonitorId(policy.getMonitorId())
+            .setMonitorId(policy.getMonitorTemplateId())
             .setPolicyId(policy.getId())
             .setTenantId(tenantId))
         .forEach(policyEventProducer::sendPolicyEvent);

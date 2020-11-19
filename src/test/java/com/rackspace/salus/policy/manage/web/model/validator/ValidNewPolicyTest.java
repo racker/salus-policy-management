@@ -45,7 +45,7 @@ public class ValidNewPolicyTest {
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -58,7 +58,7 @@ public class ValidNewPolicyTest {
         .setScope(PolicyScope.GLOBAL)
         .setSubscope("Subscope is not allowed for global scoped policies")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -74,7 +74,7 @@ public class ValidNewPolicyTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("Subscope is required")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 
@@ -87,7 +87,7 @@ public class ValidNewPolicyTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope("")
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     final Set<ConstraintViolation<MonitorPolicyCreate>> errors = validatorFactoryBean.validate(policyCreate);
 

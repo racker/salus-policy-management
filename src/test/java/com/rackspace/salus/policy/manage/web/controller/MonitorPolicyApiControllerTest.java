@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rackspace.salus.policy.manage.web.model.MonitorPolicyDTO;
 import com.rackspace.salus.policy.manage.web.model.MonitorPolicyUpdate;
 import com.rackspace.salus.telemetry.model.PolicyScope;
 import com.rackspace.salus.telemetry.entities.MonitorPolicy;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,7 +81,7 @@ public class MonitorPolicyApiControllerTest {
   @Test
   public void testGetById() throws Exception {
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))
@@ -107,6 +109,8 @@ public class MonitorPolicyApiControllerTest {
   public void testGetEffectivePoliciesByTenantId() throws Exception {
     String tenantId = RandomStringUtils.randomAlphabetic(10);
     final List<MonitorPolicy> listOfPolicies = podamFactory.manufacturePojo(ArrayList.class, MonitorPolicy.class);
+
+    List<MonitorPolicyDTO> listOfPoliciesDTO = listOfPolicies.parallelStream().map(MonitorPolicyDTO::new).collect(Collectors.toList());
     when(monitorPolicyManagement.getEffectiveMonitorPoliciesForTenant(anyString()))
         .thenReturn(listOfPolicies);
 
@@ -117,7 +121,7 @@ public class MonitorPolicyApiControllerTest {
         .andExpect(status().isOk())
         .andExpect(content()
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(content().json(objectMapper.writeValueAsString(listOfPolicies)));
+        .andExpect(content().json(objectMapper.writeValueAsString(listOfPoliciesDTO)));
 
     verify(monitorPolicyManagement).getEffectiveMonitorPoliciesForTenant(tenantId);
     verifyNoMoreInteractions(monitorPolicyManagement);
@@ -176,7 +180,7 @@ public class MonitorPolicyApiControllerTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"));
 
     mvc.perform(post(
         "/api/admin/policy/monitors")
@@ -195,7 +199,7 @@ public class MonitorPolicyApiControllerTest {
 
   private MonitorPolicy getPolicy() {
     return (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
+        .setMonitorTemplateId(UUID.fromString("32e3ac07-5a80-4d56-8519-f66eb66ec6b6"))
         .setName("Test Name")
         .setScope(PolicyScope.GLOBAL)
         .setId(UUID.fromString("c0f88d34-2833-4ebb-926c-3601795901f9"))

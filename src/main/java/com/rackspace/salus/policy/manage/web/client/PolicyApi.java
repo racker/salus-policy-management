@@ -33,7 +33,7 @@ import java.util.UUID;
 public interface PolicyApi {
   List<MonitorPolicyDTO> getEffectiveMonitorPoliciesForTenant(String tenantId, boolean useCache);
   List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean includeNullMonitors, boolean useCache);
-  List<UUID> getEffectiveMonitorPolicyIdsForTenant(String tenantId, boolean useCache);
+  List<UUID> getEffectiveMonitorTemplateIdsForTenant(String tenantId, boolean useCache);
   List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId, boolean useCache);
   Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
       String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache);
