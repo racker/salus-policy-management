@@ -36,7 +36,7 @@ public interface PolicyApi {
   List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache);
   List<MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataPolicies(String tenantId, boolean useCache);
   Map<String, MonitorMetadataPolicyDTO> getEffectiveMonitorMetadataMap(
-      String tenantId, TargetClassName className, MonitorType monitorType, boolean useCache);
+      String tenantId, TargetClassName className, MonitorType monitorType);
   List<String> getDefaultMonitoringZones(String region, boolean useCache);
   void evictEffectiveMonitorMetadataMap(String tenantId, TargetClassName className,
       MonitorType monitorType);

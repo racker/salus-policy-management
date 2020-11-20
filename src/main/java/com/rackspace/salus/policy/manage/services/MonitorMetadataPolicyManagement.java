@@ -48,7 +48,6 @@ import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.boot.context.properties.PropertyMapper;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -64,8 +63,6 @@ public class MonitorMetadataPolicyManagement {
 
   MeterRegistry meterRegistry;
 
-  CacheManager cacheManager;
-
   // metrics counters
   private final Counter.Builder createMonitorMetadataPolicySuccess;
 
@@ -73,8 +70,7 @@ public class MonitorMetadataPolicyManagement {
       EntityManager entityManager,
       MonitorMetadataPolicyRepository monitorMetadataPolicyRepository,
       PolicyEventProducer policyEventProducer,
-      PolicyManagement policyManagement, MeterRegistry meterRegistry,
-      CacheManager cacheManager) {
+      PolicyManagement policyManagement, MeterRegistry meterRegistry) {
     this.entityManager = entityManager;
     this.monitorMetadataPolicyRepository = monitorMetadataPolicyRepository;
     this.policyEventProducer = policyEventProducer;
@@ -83,7 +79,6 @@ public class MonitorMetadataPolicyManagement {
     this.meterRegistry = meterRegistry;
     createMonitorMetadataPolicySuccess = Counter.builder(MetricNames.SERVICE_OPERATION_SUCCEEDED)
         .tag(MetricTags.SERVICE_METRIC_TAG,"MonitorMetadataPolicyManagement");
-    this.cacheManager = cacheManager;
   }
 
   /**
