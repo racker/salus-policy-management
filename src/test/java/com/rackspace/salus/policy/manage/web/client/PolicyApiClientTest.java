@@ -44,7 +44,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 
 /**
@@ -103,13 +102,13 @@ public class PolicyApiClientTest {
         ));
 
     Map<String, MonitorMetadataPolicyDTO> policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPolicy));
 
     // running the same request again should return the same result from the cache
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPolicy));
     mockServer.verify();
@@ -134,7 +133,7 @@ public class PolicyApiClientTest {
 
     String tenantId = "hybrid:123456";
 
-    mockServer.expect(ExpectedCount.twice(),
+    mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
             "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
         .andRespond(withSuccess(
@@ -142,13 +141,15 @@ public class PolicyApiClientTest {
         ));
 
     Map<String, MonitorMetadataPolicyDTO> policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPolicy));
 
+    policyApiClient.evictEffectiveMonitorMetadataMap(tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
+
     // running the same request again should bypass the cache and perform a full request
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPolicy));
     mockServer.verify();
@@ -182,7 +183,7 @@ public class PolicyApiClientTest {
     String tenantId = "hybrid:123456";
 
     // only one of the three requests will hit the cache
-    mockServer.expect(ExpectedCount.twice(),
+    mockServer.expect(ExpectedCount.once(),
         requestTo(String.format(
             "/api/admin/policy/metadata/monitor/effective/%s/RemotePlugin/ping", tenantId)))
         .andRespond(withSuccess(
@@ -191,19 +192,21 @@ public class PolicyApiClientTest {
 
     // first request will populate the cache
     Map<String, MonitorMetadataPolicyDTO> policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPingPolicy));
 
     // make the same request using the cache
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPingPolicy));
 
+    policyApiClient.evictEffectiveMonitorMetadataMap(tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
+
     // make the same request bypassing the cache
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.ping, false);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.ping);
 
     assertThat(policies, equalTo(expectedPingPolicy));
 
@@ -222,15 +225,15 @@ public class PolicyApiClientTest {
     // Run the request for a different monitor type 3 times using the cache
     // the same result will be returned each time
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http);
     assertThat(policies, equalTo(expectedHttpPolicy));
 
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http);
     assertThat(policies, equalTo(expectedHttpPolicy));
 
     policies = policyApiClient.getEffectiveMonitorMetadataMap(
-        tenantId, TargetClassName.RemotePlugin, MonitorType.http, true);
+        tenantId, TargetClassName.RemotePlugin, MonitorType.http);
     assertThat(policies, equalTo(expectedHttpPolicy));
 
     mockServer.verify();

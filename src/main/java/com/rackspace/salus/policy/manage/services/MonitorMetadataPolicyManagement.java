@@ -260,8 +260,10 @@ public class MonitorMetadataPolicyManagement {
 
     tenantIds.stream()
         .map(tenantId -> new MetadataPolicyEvent()
-            .setPolicyId(policy.getId())
-            .setTenantId(tenantId))
+            .setMonitorType(policy.getMonitorType())
+            .setTargetClassName(policy.getTargetClassName())
+            .setTenantId(tenantId)
+            .setPolicyId(policy.getId()))
         .forEach(policyEventProducer::sendPolicyEvent);
   }
 
