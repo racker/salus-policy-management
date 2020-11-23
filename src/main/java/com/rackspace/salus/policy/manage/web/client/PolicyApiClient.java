@@ -119,7 +119,7 @@ public class PolicyApiClient implements PolicyApi {
       condition = "!#useCache", beforeInvocation = true)
   @Cacheable(cacheNames = CACHE_MONITOR_IDS, key = "#tenantId",
       condition = "#useCache")
-  public List<UUID> getEffectivePolicyMonitorIdsForTenant(String tenantId, boolean useCache) {
+  public List<UUID> getEffectiveMonitorTemplateIdsForTenant(String tenantId, boolean useCache) {
     final String uri = UriComponentsBuilder
         .fromPath("/api/admin/policy/monitors/effective/{tenantId}/monitor-ids")
         .buildAndExpand(tenantId)

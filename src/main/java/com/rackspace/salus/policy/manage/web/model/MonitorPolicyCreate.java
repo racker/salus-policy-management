@@ -38,5 +38,5 @@ public class MonitorPolicyCreate implements Serializable {
   @NotBlank
   String name;
 
-  UUID monitorId;
+  UUID monitorTemplateId;
 }

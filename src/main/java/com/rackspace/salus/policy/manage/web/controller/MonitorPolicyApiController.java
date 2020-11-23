@@ -75,14 +75,14 @@ public class MonitorPolicyApiController {
   }
 
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/monitor-ids")
-  @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Policy Monitor ids retrieved")})
-  public List<UUID> getEffectivePolicyMonitorIdsForTenant(@PathVariable String tenantId) {
-    return monitorPolicyManagement.getEffectivePolicyMonitorIdsForTenant(tenantId);
+  @ApiOperation(value = "Gets effective monitor template ids by tenant id")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor ids retrieved")})
+  public List<UUID> getEffectiveMonitorTemplateIdsForTenant(@PathVariable String tenantId) {
+    return monitorPolicyManagement.getEffectiveMonitorTemplateIdsForTenant(tenantId);
   }
 
   @GetMapping("/admin/policy/monitors/effective/{tenantId}/policy-ids")
-  @ApiOperation(value = "Gets effective policy monitor ids by tenant id")
+  @ApiOperation(value = "Gets effective monitor policy ids by tenant id")
   @ApiResponses(value = { @ApiResponse(code = 200, message = "Monitor Policy ids retrieved")})
   public List<UUID> getEffectiveMonitorPolicyIdsForTenant(@PathVariable String tenantId,
       @RequestParam(required = false, defaultValue = "true") boolean includeNullMonitors) {
@@ -128,8 +128,8 @@ public class MonitorPolicyApiController {
   @ApiResponses(value = { @ApiResponse(code = 201, message = "Successfully opted out of Monitor Policy")})
   public MonitorPolicyDTO optOut(@Valid @RequestBody final MonitorPolicyCreate input)
       throws IllegalArgumentException {
-    if (input.getMonitorId() != null) {
-      throw new IllegalArgumentException("monitorId cannot be set when opting out of policy");
+    if (input.getMonitorTemplateId() != null) {
+      throw new IllegalArgumentException("monitorTemplateId cannot be set when opting out of policy");
     }
     return new MonitorPolicyDTO(monitorPolicyManagement.createMonitorPolicy(input));
   }

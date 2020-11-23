@@ -46,6 +46,6 @@ public class MonitorPolicyCreateValidator extends PolicyValidator<MonitorPolicyC
    * @return True if the policy is valid, otherwise false.
    */
   private boolean isValidMonitorId(MonitorPolicyCreate policy) {
-    return policy.getScope() == PolicyScope.TENANT || policy.getMonitorId() != null;
+    return policy.getScope() == PolicyScope.TENANT || policy.getMonitorTemplateId() != null;
   }
 }

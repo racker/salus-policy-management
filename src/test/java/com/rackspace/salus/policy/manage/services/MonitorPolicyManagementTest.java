@@ -120,7 +120,7 @@ public class MonitorPolicyManagementTest {
   @Before
   public void setup() {
     MonitorPolicy policy = (MonitorPolicy) new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setScope(PolicyScope.ACCOUNT_TYPE);
@@ -139,7 +139,7 @@ public class MonitorPolicyManagementTest {
     assertThat(mp.getScope(), equalTo(defaultMonitorPolicy.getScope()));
     assertThat(mp.getSubscope(), equalTo(defaultMonitorPolicy.getSubscope()));
     assertThat(mp.getName(), equalTo(defaultMonitorPolicy.getName()));
-    assertThat(mp.getMonitorId(), equalTo(defaultMonitorPolicy.getMonitorId()));
+    assertThat(mp.getMonitorTemplateId(), equalTo(defaultMonitorPolicy.getMonitorTemplateId()));
   }
 
   @Test
@@ -147,7 +147,7 @@ public class MonitorPolicyManagementTest {
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);
     String tenantId = RandomStringUtils.randomAlphabetic(10);
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     // Store a default tenant in the db for that account type
     tenantMetadataRepository.save(new TenantMetadata()
@@ -159,20 +159,20 @@ public class MonitorPolicyManagementTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(monitor.getId());
+        .setMonitorTemplateId(monitor.getId());
 
     MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(policy.getName(), equalTo(policyCreate.getName()));
-    assertThat(policy.getMonitorId(), equalTo(monitor.getId()));
+    assertThat(policy.getMonitorTemplateId(), equalTo(monitor.getId()));
 
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
-            .setMonitorId(policyCreate.getMonitorId())
+            .setMonitorId(policyCreate.getMonitorTemplateId())
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -199,14 +199,14 @@ public class MonitorPolicyManagementTest {
         .setScope(PolicyScope.TENANT)
         .setSubscope(tenantId)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(null);
+        .setMonitorTemplateId(null);
 
     MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyOptOut);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyOptOut.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyOptOut.getSubscope()));
     assertThat(policy.getName(), equalTo(policyOptOut.getName()));
-    assertThat(policy.getMonitorId(), nullValue());
+    assertThat(policy.getMonitorTemplateId(), nullValue());
 
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
 
@@ -223,26 +223,26 @@ public class MonitorPolicyManagementTest {
   @Test
   public void testCreateMonitorPolicy_multipleTenants() {
     List<String> tenantIds = TestUtility.createMultipleTenants(tenantMetadataRepository);
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     MonitorPolicyCreate policyCreate = new MonitorPolicyCreate()
         .setScope(PolicyScope.GLOBAL)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(monitor.getId());
+        .setMonitorTemplateId(monitor.getId());
 
     MonitorPolicy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     assertThat(policy.getId(), notNullValue());
     assertThat(policy.getScope(), equalTo(policyCreate.getScope()));
     assertThat(policy.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat((policy).getName(), equalTo(policyCreate.getName()));
-    assertThat((policy).getMonitorId(), equalTo(policyCreate.getMonitorId()));
+    assertThat((policy).getMonitorTemplateId(), equalTo(policyCreate.getMonitorTemplateId()));
 
     verify(policyEventProducer, times(5)).sendPolicyEvent(policyEventArg.capture());
     assertThat(policyEventArg.getAllValues(), hasSize(5));
 
     List<MonitorPolicyEvent> expected = tenantIds.stream()
         .map(t -> (MonitorPolicyEvent) new MonitorPolicyEvent()
-            .setMonitorId(policyCreate.getMonitorId())
+            .setMonitorId(policyCreate.getMonitorTemplateId())
             .setPolicyId(policy.getId())
             .setTenantId(t)).collect(Collectors.toList());
 
@@ -256,7 +256,7 @@ public class MonitorPolicyManagementTest {
         .setScope(defaultMonitorPolicy.getScope())
         .setSubscope(defaultMonitorPolicy.getSubscope())
         .setName(defaultMonitorPolicy.getName())
-        .setMonitorId(UUID.randomUUID());
+        .setMonitorTemplateId(UUID.randomUUID());
 
     assertThatThrownBy(() -> monitorPolicyManagement.createMonitorPolicy(policyCreate))
       .isInstanceOf(AlreadyExistsException.class)
@@ -272,13 +272,13 @@ public class MonitorPolicyManagementTest {
         .setScope(PolicyScope.TENANT)
         .setSubscope(RandomStringUtils.randomAlphabetic(10))
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(UUID.randomUUID());
+        .setMonitorTemplateId(UUID.randomUUID());
 
     assertThatThrownBy(() -> monitorPolicyManagement.createMonitorPolicy(policyCreate))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
-            String.format("Invalid monitor id provided: %s",
-                policyCreate.getMonitorId())
+            String.format("Invalid monitor template id provided: %s",
+                policyCreate.getMonitorTemplateId())
         );
   }
 
@@ -302,7 +302,7 @@ public class MonitorPolicyManagementTest {
 
     assertThat(updatedPolicy.getScope(), equalTo(update.getScope()));
     assertThat(updatedPolicy.getSubscope(), equalTo(update.getSubscope()));
-    assertThat(updatedPolicy.getMonitorId(), equalTo(originalPolicy.getMonitorId()));
+    assertThat(updatedPolicy.getMonitorTemplateId(), equalTo(originalPolicy.getMonitorTemplateId()));
 
     verify(policyEventProducer, times(tenantsOnNewPolicy.size() + tenantsOnOriginalPolicy.size()))
         .sendPolicyEvent(any());
@@ -313,7 +313,7 @@ public class MonitorPolicyManagementTest {
    */
   @Test
   public void testPolicyEvent_monitorExistsAfterCreate() {
-    Monitor monitor = TestUtility.createPolicyMonitor(monitorRepository);
+    Monitor monitor = TestUtility.createPolicyTemplate(monitorRepository);
 
     // Generate a random tenant and account type for the test
     String accountType = RandomStringUtils.randomAlphabetic(10);
@@ -330,7 +330,7 @@ public class MonitorPolicyManagementTest {
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(accountType)
         .setName(RandomStringUtils.randomAlphabetic(10))
-        .setMonitorId(monitor.getId());
+        .setMonitorTemplateId(monitor.getId());
 
     Policy policy = monitorPolicyManagement.createMonitorPolicy(policyCreate);
     verify(policyEventProducer).sendPolicyEvent(policyEventArg.capture());
@@ -338,7 +338,7 @@ public class MonitorPolicyManagementTest {
     // Verify the Policy Event looks correct
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
-            .setMonitorId(policyCreate.getMonitorId())
+            .setMonitorId(policyCreate.getMonitorTemplateId())
             .setPolicyId(policy.getId())
             .setTenantId(tenantId)
     ));
@@ -352,7 +352,7 @@ public class MonitorPolicyManagementTest {
     assertThat(p.getScope(), equalTo(policyCreate.getScope()));
     assertThat(p.getSubscope(), equalTo(policyCreate.getSubscope()));
     assertThat(p.getName(), equalTo(policyCreate.getName()));
-    assertThat(p.getMonitorId(), equalTo(policyCreate.getMonitorId()));
+    assertThat(p.getMonitorTemplateId(), equalTo(policyCreate.getMonitorTemplateId()));
 
     verifyNoMoreInteractions(policyEventProducer);
   }
@@ -376,21 +376,21 @@ public class MonitorPolicyManagementTest {
 
     // Create a global policy that will not be overridden
     expected.add(policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName("OnlyGlobal")
         .setScope(PolicyScope.GLOBAL)));
 
     // Create global policy that will be overridden
     policyRepository.save(
         new MonitorPolicy()
-            .setMonitorId(UUID.randomUUID())
+            .setMonitorTemplateId(UUID.randomUUID())
             .setName("OverriddenByAccountType")
             .setScope(PolicyScope.GLOBAL)
     );
 
     // Create AccountType policy that will override global
     expected.add(policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName("OverriddenByAccountType")
         .setSubscope(testAccountType)
         .setScope(PolicyScope.ACCOUNT_TYPE)));
@@ -398,7 +398,7 @@ public class MonitorPolicyManagementTest {
     // Create AccountType policy that will be overridden by tenant
     policyRepository.save(
         new MonitorPolicy()
-            .setMonitorId(UUID.randomUUID())
+            .setMonitorTemplateId(UUID.randomUUID())
             .setName("OverriddenByTenant")
             .setSubscope(testAccountType)
             .setScope(PolicyScope.ACCOUNT_TYPE)
@@ -406,7 +406,7 @@ public class MonitorPolicyManagementTest {
 
     // Create AccountType policy that will not be overridden
     expected.add(policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName("UniqueAccountPolicy")
         .setSubscope(testAccountType)
         .setScope(PolicyScope.ACCOUNT_TYPE)));
@@ -414,7 +414,7 @@ public class MonitorPolicyManagementTest {
     // Create AccountType policy that is irrelevant to our test tenant.
     policyRepository.save(
         new MonitorPolicy()
-            .setMonitorId(UUID.randomUUID())
+            .setMonitorTemplateId(UUID.randomUUID())
             .setName("IrrelevantAccountType")
             .setSubscope("IrrelevantTenantType")
             .setScope(PolicyScope.ACCOUNT_TYPE)
@@ -422,14 +422,14 @@ public class MonitorPolicyManagementTest {
 
     // Create Tenant policy that will override AccountType
     expected.add(policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName("OverriddenByTenant")
         .setSubscope(tenantId)
         .setScope(PolicyScope.TENANT)));
 
     // Create Tenant policy that will not be overridden
     expected.add(policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName("UniqueTenantPolicy")
         .setSubscope(tenantId)
         .setScope(PolicyScope.TENANT)));
@@ -437,7 +437,7 @@ public class MonitorPolicyManagementTest {
     // Create Tenant policy that is irrelevant to our test tenant.
     policyRepository.save(
         new MonitorPolicy()
-            .setMonitorId(UUID.randomUUID())
+            .setMonitorTemplateId(UUID.randomUUID())
             .setName("IrrelevantTenant")
             .setSubscope(RandomStringUtils.randomAlphabetic(10))
             .setScope(PolicyScope.TENANT)
@@ -455,7 +455,7 @@ public class MonitorPolicyManagementTest {
 
     // Create a policy to remove
     MonitorPolicy saved = (MonitorPolicy) policyRepository.save(new MonitorPolicy()
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setName(RandomStringUtils.randomAlphabetic(10))
         .setScope(PolicyScope.GLOBAL));
 
@@ -465,7 +465,7 @@ public class MonitorPolicyManagementTest {
 
     assertThat(policyEventArg.getValue(), equalTo(
         new MonitorPolicyEvent()
-            .setMonitorId(saved.getMonitorId())
+            .setMonitorId(saved.getMonitorTemplateId())
             .setPolicyId(saved.getId())
             .setTenantId(tenantId)
     ));
@@ -500,7 +500,7 @@ public class MonitorPolicyManagementTest {
   private MonitorPolicy createAccountTypePolicy() {
     return monitorPolicyRepository.save((MonitorPolicy) new MonitorPolicy()
         .setName(RandomStringUtils.randomAlphabetic(5))
-        .setMonitorId(UUID.randomUUID())
+        .setMonitorTemplateId(UUID.randomUUID())
         .setScope(PolicyScope.ACCOUNT_TYPE)
         .setSubscope(RandomStringUtils.randomAlphabetic(5)));
   }

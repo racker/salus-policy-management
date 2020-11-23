@@ -32,6 +32,6 @@ public class MonitorPolicyDTO extends PolicyDTO {
   public MonitorPolicyDTO(MonitorPolicy policy) {
     super(policy);
     this.name = policy.getName();
-    this.monitorId = policy.getMonitorId();
+    this.monitorId = policy.getMonitorTemplateId();
   }
 }
